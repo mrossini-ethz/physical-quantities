@@ -99,3 +99,10 @@
   (when (<= index 0)
     (error "Root index must be greater than zero!"))
   (make-instance 'quantity :value (expt (value radicand) (/ index)) :error (- (/ (rerr radicand) index)) :unit (root-unit (unit radicand) index)))
+
+(defgeneric qexp (quantity))
+(defmethod qexp ((q quantity))
+  (multiple-value-bind (expansion factor) (expand-unit (unit q))
+    (when expansion
+      (error "Cannot calculate the exponential with an exponent that has a unit different from 1!"))
+    (make-instance 'quantity :value (exp (* factor (value q))) :error (* (exp (* factor (value q))) (aerr q)))))
