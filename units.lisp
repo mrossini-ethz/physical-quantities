@@ -150,3 +150,19 @@
      collect `(,(first uf) ,(/ (second uf) index))
      else
      do (error (format nil "Cannot extract the ~:r root of the unit ~a!" index unit))))
+
+(defun sort-unit (unit)
+  (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'second))
+
+(defun print-unit (unit)
+  (with-output-to-string (stream)
+    (loop
+       for uf in (sort-unit (copy-tree unit))
+       for i upfrom 0
+       when (plusp i) do (format stream " ")
+       do
+         (cond
+            ((and (minusp (second uf)) (= (second uf) -1)) (format stream "/ ~a" (first uf)))
+            ((and (minusp (second uf)) (< (second uf) -1)) (format stream "/ ~a ^ ~a" (first uf) (- (second uf))))
+            ((= (second uf) 1) (format stream "~a" (first uf)))
+            (t (format stream "~a ^ ~a" (first uf) (second uf)))))))
