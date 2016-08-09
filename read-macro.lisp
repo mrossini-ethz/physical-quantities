@@ -1,16 +1,5 @@
 (in-package :pq)
 
-(defmacro cond-table ((&rest keyforms) &body cases)
-  ;; FIXME: Keyforms should be evaluated only once and in order!
-  (let ((num (list-length keyforms)))
-    `(cond
-       ,@(loop for cas in cases collect
-              `((and ,@(loop for n below num collect
-                            (if (eql (nth n (first cas)) t)
-                                t
-                                `(funcall #',(nth n (first cas)) ,(nth n keyforms)))))
-                (progn ,@(rest cas)))))))
-
 (defrule value () form)
 (defrule unit-factor () (and (? (or '/ 'per)) (not '->) (? (and (or '^ '** (and 'to 'the)) form)))
   (:destructure (per symb exponent) `(list ',symb ,(if exponent (if per `(- ,(second exponent)) (second exponent)) (if per -1 1)))))

@@ -26,14 +26,6 @@
 
 (defrule unit-definition () (and form (* unit-factor)) (:destructure (conv unit-factors) `(,conv (list ,@unit-factors))))
 
-(defmacro define-units-% (declaration)
-  (with-gensyms (unit def k v)
-    `(destructuring-bind (,unit &key ,def &allow-other-keys) ,declaration
-       (loop for ,k being the hash-keys of *unit-prefixes* using (hash-value ,v) collect
-            `(setf (gethash ',(symb (string-upcase (first ,v)) ,unit) *unit-translation-table*)
-                  ,(if (zerop ,k) (if ,def `(list ,@(parse-list 'unit-definition ,def))) `(list (expt 10 ,,k) (list (list ',,unit 1)))))))))
-
-
 (defmacro define-units (&body unit-declarations)
   `(progn ,@(loop for decl in unit-declarations append
                  (destructuring-bind (unit &key def &allow-other-keys) decl
