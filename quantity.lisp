@@ -6,7 +6,7 @@
    (unit :initarg :unit :initform () :accessor unit)))
 
 (defmethod print-object ((obj quantity) stream)
-  (format stream "(unit-object val:~a err:~a unit:~a)" (value obj) (error-direct obj) (unit obj)))
+  (format stream "(unit-object val:~a err:~a unit:~a)" (value obj) (if (minusp (error-direct obj)) (format nil "~a%" (* 100 (relative-error obj))) (absolute-error obj)) (unit obj)))
 
 ;; Accessor functions for error
 (defgeneric absolute-error (quantity))

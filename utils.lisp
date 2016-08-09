@@ -12,6 +12,13 @@
       (xnor list-a list-b)
       (ll= (rest list-a) (rest list-b))))
 
+(defun l= (list length)
+  "Tests efficiently whether the length of the list is equal to the given length."
+  (cond
+    ((null list) (= 0 length))
+    ((zerop length) (null list))
+    (t (l= (rest list) (- length 1)))))
+
 (defun l> (list length)
   "Tests efficiently whether the length of the list is greater than the given length."
   (cond

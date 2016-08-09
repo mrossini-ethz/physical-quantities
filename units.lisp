@@ -125,10 +125,18 @@
         (error (format nil "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" unit-a unit-b base-unit-a base-unit-b)))
       (/ (* value conv-a) conv-b))))
 (defmethod convert-units ((q quantity) unit-a &optional unit-b)
-  (unless unit-b
+  (when unit-b
     (error (format nil "Overdefined unit conversion!")))
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
         (error (format nil "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" unit-a unit-b base-unit-a base-unit-b)))
       (make-instance 'quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
+
+(defun multiply-units (&rest units)
+  (reduce-unit (apply #'append units)))
+
+(defun divide-units (&rest units)
+  (assert (l> units 1))
+  (reduce-unit (append (first units) (loop for unit in (rest units) append (loop for unit-factor in unit collect `(,(first unit-factor) ,(- (second unit-factor))))))))
+
