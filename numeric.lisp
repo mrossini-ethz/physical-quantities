@@ -89,18 +89,14 @@
     (t (dup-quantity base :v (expt (value base) power) :e (apply #'add-rerr (loop for i below (abs power) collect base)) :u (power-unit (unit base) power)))))
 (defmethod qpow ((base number) (power quantity))
   ;; FIXME: error propagation not handled correctly
-  (multiple-value-bind (expansion factor) (expand-unit (unit power))
-    (when expansion
-      (error "Cannot raise number to a power with a unit different from 1!"))
-    (expt base (* factor (value power)))))
+  (with-unitless-quantity (val err power)
+    (expt base val)))
 (defmethod qpow ((base quantity) (power quantity))
   ;; FIXME: error propagation not handled correctly
-  (multiple-value-bind (expansion factor) (expand-unit (unit power))
-    (when expansion
-      (error "Cannot raise quantity to a power with a unit different from 1!"))
-    (when (not (integerp (* factor (value power))))
+  (with-unitless-quantity (val err power)
+    (when (not (integerp val))
       (error "Cannot raise quantity to a non-integer power!"))
-    (qpow base (* factor (value power)))))
+    (qpow base val)))
 
 (defgeneric qroot (radicand index))
 (defmethod qroot ((radicand quantity) (index integer))
@@ -110,10 +106,8 @@
 
 (defgeneric qexp (quantity))
 (defmethod qexp ((q quantity))
-  (multiple-value-bind (expansion factor) (expand-unit (unit q))
-    (when expansion
-      (error "Cannot calculate the exponential with an exponent that has a unit different from 1!"))
-    (make-instance 'quantity :value (exp (* factor (value q))) :error (* (exp (* factor (value q))) (aerr q)))))
+  (with-unitless-quantity (val err q)
+    (make-instance 'quantity :value (exp val) :error (* (exp val) (ae val err)))))
 
 (defgeneric qln (number))
 (defmethod qln ((number quantity))
