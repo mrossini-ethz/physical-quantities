@@ -79,6 +79,20 @@
                        (make-instance 'quantity :value 1)
                        (error "Zero raised to the power of zero!")))
     (t (dup-quantity base :v (expt (value base) power) :e (apply #'add-rerr (loop for i below (abs power) collect base)) :u (power-unit (unit base) power)))))
+(defmethod qpow ((base number) (power quantity))
+  ;; FIXME: error propagation not handled correctly
+  (multiple-value-bind (expansion factor) (expand-unit (unit power))
+    (when expansion
+      (error "Cannot raise number to a power with a unit different from 1!"))
+    (expt base (* factor (value power)))))
+(defmethod qpow ((base quantity) (power quantity))
+  ;; FIXME: error propagation not handled correctly
+  (multiple-value-bind (expansion factor) (expand-unit (unit power))
+    (when expansion
+      (error "Cannot raise quantity to a power with a unit different from 1!"))
+    (when (not (integerp (* factor (value power))))
+      (error "Cannot raise quantity to a non-integer power!"))
+    (qpow base (* factor (value power)))))
 
 (defgeneric qroot (radicand index))
 (defmethod qroot ((radicand quantity) (index integer))
