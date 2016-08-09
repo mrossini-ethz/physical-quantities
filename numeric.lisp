@@ -79,3 +79,9 @@
                        (make-instance 'quantity :value 1)
                        (error "Zero raised to the power of zero!")))
     (t (dup-quantity base :v (expt (value base) power) :e (apply #'add-rerr (loop for i below (abs power) collect base)) :u (power-unit (unit base) power)))))
+
+(defgeneric qroot (radicand index))
+(defmethod qroot ((radicand quantity) (index integer))
+  (when (<= index 0)
+    (error "Root index must be greater than zero!"))
+  (make-instance 'quantity :value (expt (value radicand) (/ index)) :error (- (/ (rerr radicand) index)) :unit (root-unit (unit radicand) index)))

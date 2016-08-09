@@ -143,3 +143,10 @@
   (if (l> units 1)
       (reduce-unit (append (first units) (apply #'append (mapcar #'(lambda (x) (power-unit x -1)) (rest units)))))
       (power-unit (first units) -1)))
+
+(defun root-unit (unit index)
+  (loop for uf in unit
+     when (zerop (rem (second uf) index))
+     collect `(,(first uf) ,(/ (second uf) index))
+     else
+     do (error (format nil "Cannot extract the ~:r root of the unit ~a!" index unit))))
