@@ -34,6 +34,8 @@
                                ,(if (zerop k) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt 10 ,k) (list (list ',unit 1))))))))))
 
 (defparameter *unit-translation-table* (make-hash-table))
+(defparameter *unit-alias-table* (make-hash-table))
+(defparameter *unit-abbreviation-table* (make-hash-table))
 
 (define-units
   ;; SI base units
@@ -69,6 +71,25 @@
   (katal :def (1 mol / second))
 )
 
+(defun lookup-unit (unit)
+  ;; Search the translation table directly
+  (multiple-value-bind (result found) (gethash unit *unit-translation-table*)
+    (if found
+        (values unit result)
+        ;; Not found, search the alias table instead
+        (multiple-value-bind (result found) (gethash unit *unit-alias-table*)
+          (if found
+              (lookup-unit result)
+              ;; Still not found, search the abbreviation table instead
+              (multiple-value-bind (result found) (gethash unit *unit-abbreviation-table*)
+                (if found
+                    (lookup-unit result)
+                    (error "Unknown unit ~a!" unit))))))))
+
+(defmacro with-unit-lookup ((base-unit translation unit) &body body)
+  `(multiple-value-bind (,base-unit ,translation) (lookup-unit ,unit)
+     ,@body))
+
 (defun collect-factors (f &rest expanded-unit-factors)
   ;; Each of the expanded-unit-factors is a list (conv () () ())
   (destructuring-bind (conv units)
@@ -92,18 +113,16 @@
   ;; - a list of conversion factor and unit factors (1000 (kg 2) (m 4) (s -4))
   (destructuring-bind (unit power) factor
     ;; Query the unit translation table
-    (multiple-value-bind (result found) (gethash unit *unit-translation-table*)
-      (if found
-          ;; When result is nil the unit is a base unit
-          (if result
-              ;; Not a base unit
-              (destructuring-bind (conv unit-factors) result
-                ;; Expand the unit collecting all conversion factors
-                (apply #'collect-factors (expt conv power)
-                       (loop for uf in unit-factors collect (expand-unit-factor `(,(first uf) ,(* (second uf) power))))))
-              ;; Base unit, no recursion
-              (list 1 factor))
-          (error "Illegal unit specified!")))))
+    (with-unit-lookup (base result unit)
+      ;; When result is nil the unit is a base unit
+      (if result
+          ;; Not a base unit
+          (destructuring-bind (conv unit-factors) result
+            ;; Expand the unit collecting all conversion factors
+            (apply #'collect-factors (expt conv power)
+                   (loop for uf in unit-factors collect (expand-unit-factor `(,(first uf) ,(* (second uf) power))))))
+          ;; Base unit, no recursion
+          (list 1 `(,base ,power))))))
 
 (defun expand-unit (unit)
   ;; `unit' is a list of unit factors, e.g. ((kN 1) (mm 1))
@@ -122,7 +141,7 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
-        (error (format nil "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" unit-a unit-b base-unit-a base-unit-b)))
+        (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit unit-a) (print-unit unit-b) base-unit-a base-unit-b))
       (/ (* value conv-a) conv-b))))
 (defmethod convert-units ((q quantity) unit-a &optional unit-b)
   (when unit-b
@@ -130,7 +149,7 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
-        (error (format nil "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" unit-a unit-b base-unit-a base-unit-b)))
+        (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit (unit q)) (print-unit unit-a) base-unit-a base-unit-b))
       (make-instance 'quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
 (defun power-unit (unit power)
