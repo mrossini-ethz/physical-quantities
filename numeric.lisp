@@ -17,6 +17,14 @@
                   :error ,(if (or (null e) (eql q e)) `(error-direct ,q) e)
                   :unit ,(if (or (null u) (eql q u)) `(copy-tree (unit ,q)) u)))
 
+(defmacro with-unitless-quantity ((val err quantity) &body body)
+  (with-gensyms (expansion factor)
+    `(multiple-value-bind (,expansion ,factor) (expand-unit (unit ,quantity))
+       (when ,expansion
+         (error "Quantity is required to be without unit!"))
+       (let ((,val (* ,factor (value ,quantity))) (,err (if (minusp (error-direct ,quantity)) (error-direct ,quantity) (* ,factor (error-direct ,quantity)))))
+         ,@body))))
+
 ;; Actual functions -----------------------------------------------------------------
 
 (defun quantityp (object)
@@ -106,3 +114,13 @@
     (when expansion
       (error "Cannot calculate the exponential with an exponent that has a unit different from 1!"))
     (make-instance 'quantity :value (exp (* factor (value q))) :error (* (exp (* factor (value q))) (aerr q)))))
+
+(defgeneric qln (number))
+(defmethod qln ((number quantity))
+  (with-unitless-quantity (val err number)
+    (make-instance 'quantity :value (log val) :error (abs (/ (ae val err) val)))))
+
+(defgeneric qlog (number base))
+(defmethod qlog ((q quantity) (base number))
+  (with-unitless-quantity (val err base)
+    (make-instance 'quantity :value (log val base) :error (abs (/ (ae val err) val (log base))))))
