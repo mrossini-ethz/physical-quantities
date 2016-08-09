@@ -22,7 +22,7 @@
 (defun quantityp (object)
   (eql (type-of object) 'quantity))
 
-(defmacro copy-quantity (q)
+(defun copy-quantity (q)
   `(dup-quantity ,q))
 
 (defgeneric binary+ (a b))
