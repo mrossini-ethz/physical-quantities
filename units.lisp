@@ -133,10 +133,13 @@
         (error (format nil "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" unit-a unit-b base-unit-a base-unit-b)))
       (make-instance 'quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
+(defun power-unit (unit power)
+  (loop for uf in unit collect `(,(first uf) ,(* (second uf) power))))
+
 (defun multiply-units (&rest units)
   (reduce-unit (apply #'append units)))
 
 (defun divide-units (&rest units)
-  (assert (l> units 1))
-  (reduce-unit (append (first units) (loop for unit in (rest units) append (loop for unit-factor in unit collect `(,(first unit-factor) ,(- (second unit-factor))))))))
-
+  (if (l> units 1)
+      (reduce-unit (append (first units) (apply #'append (mapcar #'(lambda (x) (power-unit x -1)) (rest units)))))
+      (power-unit (first units) -1)))
