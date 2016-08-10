@@ -1,28 +1,50 @@
 (in-package :pq)
 
-(defparameter *unit-prefixes* (make-hash-table))
-;; FIXME: make prefixes definable
-(setf (gethash -24 *unit-prefixes*) '("yocto" "y"))
-(setf (gethash -21 *unit-prefixes*) '("zepto" "z"))
-(setf (gethash -18 *unit-prefixes*) '("atto" "a"))
-(setf (gethash -15 *unit-prefixes*) '("femto" "f"))
-(setf (gethash -12 *unit-prefixes*) '("nano" "n"))
-(setf (gethash -9 *unit-prefixes*) '("pico" "p"))
-(setf (gethash -6 *unit-prefixes*) '("micro" "u"))
-(setf (gethash -3 *unit-prefixes*) '("milli" "m"))
-(setf (gethash -2 *unit-prefixes*) '("centi" "c"))
-(setf (gethash -1 *unit-prefixes*) '("deci" "d"))
-(setf (gethash 0 *unit-prefixes*) '("" ""))
-(setf (gethash 1 *unit-prefixes*) '("deca" "da"))
-(setf (gethash 2 *unit-prefixes*) '("hecto" "h"))
-(setf (gethash 3 *unit-prefixes*) '("kilo" "k"))
-(setf (gethash 6 *unit-prefixes*) '("mega" "meg"))
-(setf (gethash 9 *unit-prefixes*) '("giga" "g"))
-(setf (gethash 12 *unit-prefixes*) '("tera" "t"))
-(setf (gethash 15 *unit-prefixes*) '("peta" "pet"))
-(setf (gethash 18 *unit-prefixes*) '("exa" "e"))
-(setf (gethash 21 *unit-prefixes*) '("zetta" "zet"))
-(setf (gethash 24 *unit-prefixes*) '("yotta" "yot"))
+;; Unit prefix database ------------------------------------------------------------
+
+(defparameter *unit-prefix-table* (make-hash-table))
+
+(defmacro define-unit-prefixes (&body prefix-declarations)
+  `(progn
+     ,@(loop for decl in prefix-declarations collect
+            (destructuring-bind (name abbr power &key (base 10)) decl
+              `(setf (gethash ',name *unit-prefix-table*) (list ,base ,power ',abbr))))))
+
+(define-unit-prefixes
+  (yocto y -24)
+  (zepto z -21)
+  (atto a  -18)
+  (femto f -15)
+  (pico p -12)
+  (nano n -9)
+  (micro u -6)
+  (milli m -3)
+  (centi c -2)
+  (deci d -1)
+  (deca da 1)
+  (hecto h 2)
+  (kilo k 3)
+  (mega meg 6)
+  (giga g 9)
+  (tera t 12)
+  (peta p 15)
+  (exa e 18)
+  (zetta zet 21)
+  (yotta yot 24)
+  (kibi ki 1 :base 1024)
+  (mebi mi 2 :base 1024)
+  (gibi gi 3 :base 1024)
+  (tebi ti 4 :base 1024)
+  (pebi pi 5 :base 1024)
+  (exbi ei 6 :base 1024)
+  (zebi zi 7 :base 1024)
+  (yobi yi 8 :base 1024))
+
+;; Unit database -------------------------------------------------------------------
+
+(defparameter *unit-translation-table* (make-hash-table))
+(defparameter *unit-alias-table* (make-hash-table))
+(defparameter *unit-abbreviation-table* (make-hash-table))
 
 (defrule unit-definition () (and form (* unit-factor)) (:destructure (conv unit-factors) `(,conv (list ,@unit-factors))))
 
@@ -32,24 +54,30 @@
      ,@(loop for decl in unit-declarations append
             ;; Destructure each declaration
             (destructuring-bind (name &key def alias abbrev prefix-max prefix-min) decl
-              ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
-              (loop
-                 for k being the hash-keys of *unit-prefixes* using (hash-value v)
-                 when (and (or (not prefix-max) (<= k prefix-max)) (or (not prefix-min) (>= k prefix-min))) append
-                   (append
-                    ;; Add main name to *unit-translation-table*
-                    (list `(setf (gethash ',(symb (string-upcase (first v)) name) *unit-translation-table*)
-                                 ,(if (zerop k) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt 10 ,k) (list (list ',name 1))))))
-                    ;; Add aliases to *unit-alias-table*, with all possible prefixes, that point to the names in *unit-translation-table*
-                    (loop for a in (mklist alias) collect
-                         `(setf (gethash ',(symb (string-upcase (first v)) a) *unit-alias-table*) ',(symb (string-upcase (first v)) name)))
-                    ;; Add abbreviations to *unit-abbreviation-table*, with all possible prefixes, that point to the names in *unit-translation-table*
-                    (loop for a in (mklist abbrev) collect
-                         `(setf (gethash ',(symb (string-upcase (second v)) a) *unit-alias-table*) ',(symb (string-upcase (first v)) name)))))))))
-
-(defparameter *unit-translation-table* (make-hash-table))
-(defparameter *unit-alias-table* (make-hash-table))
-(defparameter *unit-abbreviation-table* (make-hash-table))
+              ;; Add the names, aliases and abbreviations to the respective tables
+              (append
+               `((setf (gethash ',name *unit-translation-table*) ,(if def `(list ,@(parse-list 'unit-definition def))))
+                 ,@(loop for a in (mklist alias) collect
+                        `(setf (gethash ',a *unit-alias-table*) ',name))
+                 ,@(loop for a in (mklist abbrev) collect
+                        `(setf (gethash ',a *unit-abbreviation-table*) ',name)))
+               ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
+               (loop
+                  for prefix being the hash-keys of *unit-prefix-table* using (hash-value v)
+                  for base = (first v)
+                  for power = (second v)
+                  for prefix-abbrev = (third v)
+                  when (and (or (not prefix-max) (<= power prefix-max)) (or (not prefix-min) (>= power prefix-min))) append
+                    (append
+                     ;; Add main name to *unit-translation-table*
+                     (list `(setf (gethash ',(symb prefix name) *unit-translation-table*)
+                                  ,(if (zerop power) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt ,base ,power) (list (list ',name 1))))))
+                     ;; Add aliases to *unit-alias-table*, with all possible prefixes, that point to the names in *unit-translation-table*
+                     (loop for a in (mklist alias) collect
+                          `(setf (gethash ',(symb prefix a) *unit-alias-table*) ',(symb prefix name)))
+                     ;; Add abbreviations to *unit-abbreviation-table*, with all possible prefixes, that point to the names in *unit-translation-table*
+                     (loop for a in (mklist abbrev) collect
+                          `(setf (gethash ',(symb prefix-abbrev a) *unit-alias-table*) ',(symb prefix name))))))))))
 
 (define-units
   ;; SI base units
@@ -83,6 +111,7 @@
   (gray :def (1 joule / kilogram) :abbrev gy)
   (sievert :def (1 joule / kilogram) :abbrev sv)
   (katal :def (1 mol / second) :abbrev kat)
+  (byte :def (1) :abbrev b :prefix-min 0)
 )
 
 (defun lookup-unit (unit)
@@ -103,6 +132,8 @@
 (defmacro with-unit-lookup ((base-unit translation unit) &body body)
   `(multiple-value-bind (,base-unit ,translation) (lookup-unit ,unit)
      ,@body))
+
+;; Unit expansion ------------------------------------------------------------------
 
 (defun collect-factors (f &rest expanded-unit-factors)
   ;; Each of the expanded-unit-factors is a list (conv () () ())
