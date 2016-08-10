@@ -25,7 +25,8 @@
   (with-slots (value error) quantity
     (re value error)))
 ;; Setf functions for error
-;; FIXME: need generic functions too?
+(defgeneric (setf absolute-error) (error quantity))
+(defgeneric (setf relative-error) (error quantity))
 (defmethod (setf absolute-error) (error (quantity quantity))
   (setf (slot-value quantity 'error) error))
 (defmethod (setf relative-error) (error (quantity quantity))
