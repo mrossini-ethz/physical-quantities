@@ -49,6 +49,7 @@
 (defrule unit-definition () (and form (* unit-factor)) (:destructure (conv unit-factors) `(,conv (list ,@unit-factors))))
 
 (defmacro define-units (&body unit-declarations)
+  (let (names aliases abbrevs)
   `(progn
      ;; Loop over all statements
      ,@(loop for decl in unit-declarations append
@@ -56,6 +57,11 @@
             (destructuring-bind (name &key def alias abbrev prefix-max prefix-min (base 10)) decl
               ;; Add the names, aliases and abbreviations to the respective tables
               (append
+               ;; Bookkeeping of newly defined names, aliases and abbreviations
+               (progn
+                 (if (have name names) (warn "Unit ~a is already defined." name) (push name names))
+                 (loop for a in (mklist alias) when (have a aliases) do (warn "Unit alias ~a is already defined." a) else do (push a aliases))
+                 (loop for a in (mklist abbrev) when (have a abbrevs) do (warn "Unit abbreviation ~a is already defined." a) else do (push a abbrevs)))
                `((setf (gethash ',name *unit-translation-table*) ,(if def `(list ,@(parse-list 'unit-definition def))))
                  ,@(loop for a in (mklist alias) collect
                         `(setf (gethash ',a *unit-alias-table*) ',name))
@@ -77,7 +83,7 @@
                           `(setf (gethash ',(symb prefix a) *unit-alias-table*) ',(symb prefix name)))
                      ;; Add abbreviations to *unit-abbreviation-table*, with all possible prefixes, that point to the names in *unit-translation-table*
                      (loop for a in (mklist abbrev) collect
-                          `(setf (gethash ',(symb prefix-abbrev a) *unit-alias-table*) ',(symb prefix name))))))))))
+                          `(setf (gethash ',(symb prefix-abbrev a) *unit-alias-table*) ',(symb prefix name)))))))))))
 
 (define-units
   ;; SI base units
@@ -88,7 +94,7 @@
   (kelvin :abbrev k :prefix-max 0)
   (mol)
   (candela :abbrev cd)
-  ;; SI derived units
+  ;; Named units derived from SI base units
   (radian :def (1) :abbrev rad)
   (steradian :def (1) :abbrev sr)
   (hertz :def (1 / second) :abbrev hz)
@@ -103,7 +109,7 @@
   (siemens :def (1 ampere / volt))
   (weber :def (1 volt second) :abbrev wb)
   (tesla :def (1 weber / metre ^ 2) :abbrev t)
-  (henry :def (1 weber / ampere) :abbrev h)
+  (henry :def (1 weber / ampere))
   (celsius :def (1 kelvin) :prefix-max 0 :prefix-min 0)
   (lumen :def (1 candela steradian) :abbrev lm)
   (lux :def (1 lumen / metre ^ 2) :abbrev lx)
@@ -112,6 +118,15 @@
   (sievert :def (1 joule / kilogram) :abbrev sv)
   (katal :def (1 mol / second) :abbrev kat)
   (byte :def (1) :abbrev b :prefix-min 0 :base (10 1024))
+  ;; Non-SI units accepted for use with SI
+  (minute :def (60 second) :abbrev min)
+  (hour :def (60 minute) :abbrev h)
+  (day :def (24 hour) :abbrev d)
+  (litre :def (1 decimetre ^ 3) :abbrev l)
+  (tonne :def (1000 kilogram) :prefix-min 0)
+  (astronomical-unit :def (149597870700 metre) :abbrev au)
+  (electronvolt :def (1.6021765314d-19 joule) :abbrev ev)
+  (atomic-mass :def (1.6605388628e-27 kilogram) :abbrev u)
 )
 
 (defun lookup-unit (unit)
