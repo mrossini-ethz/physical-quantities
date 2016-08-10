@@ -53,7 +53,7 @@
      ;; Loop over all statements
      ,@(loop for decl in unit-declarations append
             ;; Destructure each declaration
-            (destructuring-bind (name &key def alias abbrev prefix-max prefix-min) decl
+            (destructuring-bind (name &key def alias abbrev prefix-max prefix-min (base 10)) decl
               ;; Add the names, aliases and abbreviations to the respective tables
               (append
                `((setf (gethash ',name *unit-translation-table*) ,(if def `(list ,@(parse-list 'unit-definition def))))
@@ -64,14 +64,14 @@
                ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
                (loop
                   for prefix being the hash-keys of *unit-prefix-table* using (hash-value v)
-                  for base = (first v)
-                  for power = (second v)
+                  for pbase = (first v)
+                  for ppower = (second v)
                   for prefix-abbrev = (third v)
-                  when (and (or (not prefix-max) (<= power prefix-max)) (or (not prefix-min) (>= power prefix-min))) append
+                  when (and (or (not prefix-max) (<= ppower prefix-max)) (or (not prefix-min) (>= ppower prefix-min)) (have pbase (mklist base))) append
                     (append
                      ;; Add main name to *unit-translation-table*
                      (list `(setf (gethash ',(symb prefix name) *unit-translation-table*)
-                                  ,(if (zerop power) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt ,base ,power) (list (list ',name 1))))))
+                                  ,(if (zerop ppower) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt ,pbase ,ppower) (list (list ',name 1))))))
                      ;; Add aliases to *unit-alias-table*, with all possible prefixes, that point to the names in *unit-translation-table*
                      (loop for a in (mklist alias) collect
                           `(setf (gethash ',(symb prefix a) *unit-alias-table*) ',(symb prefix name)))
@@ -111,7 +111,7 @@
   (gray :def (1 joule / kilogram) :abbrev gy)
   (sievert :def (1 joule / kilogram) :abbrev sv)
   (katal :def (1 mol / second) :abbrev kat)
-  (byte :def (1) :abbrev b :prefix-min 0)
+  (byte :def (1) :abbrev b :prefix-min 0 :base (10 1024))
 )
 
 (defun lookup-unit (unit)
