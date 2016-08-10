@@ -6,6 +6,10 @@
 (defmacro nand (&rest forms)
   `(not (and ,@forms)))
 
+(defun mklist (obj)
+  "Makes a list out of the given object unless it already is a list."
+  (if (listp obj) obj (list obj)))
+
 (defun ll= (list-a list-b)
   "Tests efficiently whether the length of list-a is equal to the length of list-b."
   (if (nand list-a list-b)

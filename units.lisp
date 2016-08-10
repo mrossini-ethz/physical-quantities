@@ -27,11 +27,23 @@
 (defrule unit-definition () (and form (* unit-factor)) (:destructure (conv unit-factors) `(,conv (list ,@unit-factors))))
 
 (defmacro define-units (&body unit-declarations)
-  `(progn ,@(loop for decl in unit-declarations append
-                 (destructuring-bind (unit &key def &allow-other-keys) decl
-                   (loop for k being the hash-keys of *unit-prefixes* using (hash-value v) collect
-                        `(setf (gethash ',(symb (string-upcase (first v)) unit) *unit-translation-table*)
-                               ,(if (zerop k) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt 10 ,k) (list (list ',unit 1))))))))))
+  `(progn
+     ;; Loop over all statements
+     ,@(loop for decl in unit-declarations append
+            ;; Destructure each declaration
+            (destructuring-bind (name &key def alias abbrev &allow-other-keys) decl
+              ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
+              (loop for k being the hash-keys of *unit-prefixes* using (hash-value v) append
+                   (append
+                    ;; Add main name to *unit-translation-table*
+                    (list `(setf (gethash ',(symb (string-upcase (first v)) name) *unit-translation-table*)
+                                 ,(if (zerop k) (if def `(list ,@(parse-list 'unit-definition def))) `(list (expt 10 ,k) (list (list ',name 1))))))
+                    ;; Add aliases to *unit-alias-table*, with all possible prefixes, that point to the names in *unit-translation-table*
+                    (loop for a in (mklist alias) collect
+                         `(setf (gethash ',(symb (string-upcase (first v)) a) *unit-alias-table*) ',(symb (string-upcase (first v)) name)))
+                    ;; Add abbreviations to *unit-abbreviation-table*, with all possible prefixes, that point to the names in *unit-translation-table*
+                    (loop for a in (mklist abbrev) collect
+                         `(setf (gethash ',(symb (string-upcase (second v)) a) *unit-alias-table*) ',(symb (string-upcase (first v)) name)))))))))
 
 (defparameter *unit-translation-table* (make-hash-table))
 (defparameter *unit-alias-table* (make-hash-table))
@@ -39,7 +51,7 @@
 
 (define-units
   ;; SI base units
-  (metre :abbrev m :prefix-max 3)
+  (metre :abbrev m :alias meter :prefix-max 3)
   (gram :abbrev g :prefix-max 3)
   (second :abbrev s :prefix-max 0)
   (ampere :abbrev a)
