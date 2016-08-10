@@ -31,9 +31,11 @@
      ;; Loop over all statements
      ,@(loop for decl in unit-declarations append
             ;; Destructure each declaration
-            (destructuring-bind (name &key def alias abbrev &allow-other-keys) decl
+            (destructuring-bind (name &key def alias abbrev prefix-max prefix-min) decl
               ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
-              (loop for k being the hash-keys of *unit-prefixes* using (hash-value v) append
+              (loop
+                 for k being the hash-keys of *unit-prefixes* using (hash-value v)
+                 when (and (or (not prefix-max) (<= k prefix-max)) (or (not prefix-min) (>= k prefix-min))) append
                    (append
                     ;; Add main name to *unit-translation-table*
                     (list `(setf (gethash ',(symb (string-upcase (first v)) name) *unit-translation-table*)
@@ -59,28 +61,28 @@
   (mol)
   (candela :abbrev cd)
   ;; SI derived units
-  (radian :def (1))
-  (steradian :def (1))
-  (hertz :def (1 / second))
-  (newton :def (1 kilogram metre / second ^ 2))
-  (pascal :def (1 newton / metre ^ 2))
-  (joule :def (1 newton metre))
-  (watt :def (1 joule / second))
-  (coulomb :def (1 ampere second))
-  (volt :def (1 watt / ampere))
-  (farad :def (1 coulomb / volt))
+  (radian :def (1) :abbrev rad)
+  (steradian :def (1) :abbrev sr)
+  (hertz :def (1 / second) :abbrev hz)
+  (newton :def (1 kilogram metre / second ^ 2) :abbrev n)
+  (pascal :def (1 newton / metre ^ 2) :abbrev pa)
+  (joule :def (1 newton metre) :abbrev j)
+  (watt :def (1 joule / second) :abbrev w)
+  (coulomb :def (1 ampere second) :abbrev c)
+  (volt :def (1 watt / ampere) :abbrev v)
+  (farad :def (1 coulomb / volt) :abbrev f)
   (ohm :def (1 volt / ampere))
   (siemens :def (1 ampere / volt))
-  (weber :def (1 volt second))
-  (tesla :def (1 weber / metre ^ 2))
-  (henry :def (1 weber / ampere))
-  (celsius :def (1 kelvin))
-  (lumen :def (1 candela steradian))
-  (lux :def (1 lumen / metre ^ 2))
-  (becquerel :def (1 / second))
-  (gray :def (1 joule / kilogram))
-  (sievert :def (1 joule / kilogram))
-  (katal :def (1 mol / second))
+  (weber :def (1 volt second) :abbrev wb)
+  (tesla :def (1 weber / metre ^ 2) :abbrev t)
+  (henry :def (1 weber / ampere) :abbrev h)
+  (celsius :def (1 kelvin) :prefix-max 0 :prefix-min 0)
+  (lumen :def (1 candela steradian) :abbrev lm)
+  (lux :def (1 lumen / metre ^ 2) :abbrev lx)
+  (becquerel :def (1 / second) :abbrev bq)
+  (gray :def (1 joule / kilogram) :abbrev gy)
+  (sievert :def (1 joule / kilogram) :abbrev sv)
+  (katal :def (1 mol / second) :abbrev kat)
 )
 
 (defun lookup-unit (unit)
