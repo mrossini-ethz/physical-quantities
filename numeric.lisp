@@ -41,6 +41,7 @@
   ;; FIXME: single and no argument do not work
   (assert (l> numbers 1))
   (reduce #'binary+ numbers))
+(export 'q+)
 
 (defgeneric unary- (a))
 (defmethod unary- ((a quantity))
@@ -55,6 +56,7 @@
   (if (l= numbers 1)
       (unary- (first numbers))
       (reduce #'binary- numbers)))
+(export 'q-)
 
 (defgeneric binary* (a b))
 (defmethod binary* ((a quantity) (b quantity))
@@ -67,6 +69,7 @@
   ;; FIXME single and no argument do not work
   (assert (l> numbers 1))
   (reduce #'binary* numbers))
+(export 'q*)
 
 (defgeneric binary/ (a b))
 (defmethod binary/ ((a quantity) (b quantity))
@@ -79,6 +82,7 @@
   ;; FIXME single and no argument do not work
   (assert (l> numbers 1))
   (reduce #'binary/ numbers))
+(export 'q/)
 
 (defgeneric qpow (base power))
 (defmethod qpow ((base quantity) (power integer))
@@ -97,24 +101,29 @@
     (when (not (integerp val))
       (error "Cannot raise quantity to a non-integer power!"))
     (qpow base val)))
+(export 'qpow)
 
 (defgeneric qroot (radicand index))
 (defmethod qroot ((radicand quantity) (index integer))
   (when (<= index 0)
     (error "Root index must be greater than zero!"))
   (make-instance 'quantity :value (expt (value radicand) (/ index)) :error (- (/ (rerr radicand) index)) :unit (root-unit (unit radicand) index)))
+(export 'qroot)
 
 (defgeneric qexp (quantity))
 (defmethod qexp ((q quantity))
   (with-unitless-quantity (val err q)
     (make-instance 'quantity :value (exp val) :error (* (exp val) (ae val err)))))
+(export 'qexp)
 
 (defgeneric qln (number))
 (defmethod qln ((number quantity))
   (with-unitless-quantity (val err number)
     (make-instance 'quantity :value (log val) :error (abs (/ (ae val err) val)))))
+(export 'qln)
 
 (defgeneric qlog (number base))
 (defmethod qlog ((q quantity) (base number))
   (with-unitless-quantity (val err base)
     (make-instance 'quantity :value (log val base) :error (abs (/ (ae val err) val (log base))))))
+(export 'qlog)
