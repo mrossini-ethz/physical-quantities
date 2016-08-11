@@ -136,7 +136,7 @@
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
         (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit (unit q)) (print-unit unit-a) base-unit-a base-unit-b))
-      (make-instance 'quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
+      (make-quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
 (defun power-unit (unit power)
   (loop for uf in unit collect `(,(first uf) ,(* (second uf) power))))
