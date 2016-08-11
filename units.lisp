@@ -2,32 +2,29 @@
 
 ;; Unit prefix database ------------------------------------------------------------
 
-(defparameter *unit-prefix-table* (make-hash-table))
+(defparameter *unit-prefix-table* (make-hash-table :test 'equal))
 (export '*unit-prefix-table*)
 
 (defmacro define-unit-prefixes (&body prefix-declarations)
   `(progn
      ,@(loop for decl in prefix-declarations collect
             (destructuring-bind (name abbr power &key (base 10)) decl
-              `(setf (gethash ',name *unit-prefix-table*) (list ,base ,power ',abbr))))))
+              `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr)))))))
 
 ;; Unit database -------------------------------------------------------------------
 
-(defparameter *unit-translation-table* (make-hash-table))
-(defparameter *unit-alias-table* (make-hash-table))
-(defparameter *unit-abbreviation-table* (make-hash-table))
+(defparameter *unit-translation-table* (make-hash-table :test 'equal))
+(defparameter *unit-alias-table* (make-hash-table :test 'equal))
+(defparameter *unit-abbreviation-table* (make-hash-table :test 'equal))
 (export '(*unit-translation-table* *unit-alias-table* *unit-abbreviation-table*))
-
-(defmacro table-entry (key &key (table :translation))
-  `(gethash ,key ,(case table (:translation '*unit-translation-table*) (:alias '*unit-alias-table*) (:abbrev '*unit-abbreviation-table*))))
 
 (defun table-insert (name aliases abbrevs def)
   ;; Set main entry
-  (setf (gethash name *unit-translation-table*) def)
+  (setf (gethash (symbol-name name) *unit-translation-table*) def)
   (loop for alias in (mklist aliases) do
-       (setf (gethash alias *unit-alias-table*) name))
+       (setf (gethash (symbol-name alias) *unit-alias-table*) (symbol-name name)))
   (loop for abbrev in (mklist abbrevs) do
-       (setf (gethash abbrev *unit-abbreviation-table*) name)))
+       (setf (gethash (symbol-name abbrev) *unit-abbreviation-table*) (symbol-name name))))
 
 (defun symbol-prefix (prefix symbols)
   (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
@@ -54,9 +51,9 @@
                                    ,(if (listp base) `(have (first ,v) (list ,@base)) `(= ,base (first ,v)))) do
                          ;; Add main name to *unit-translation-table*
                            (table-insert (symb ,prefix ',name)
-                                         (symbol-prefix ',prefix ',alias)
+                                         (symbol-prefix ,prefix ',alias)
                                          (symbol-prefix (third ,v) ',abbrev)
-                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (list ',name 1)))))))))))))
+                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (list ,(symbol-name name) 1)))))))))))))
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
@@ -122,7 +119,7 @@
 (defun units-equal (unit-a unit-b)
   (when (ll= unit-a unit-b)
     (loop for item-a in unit-a always
-         (let ((item-b (find (first item-a) unit-b :key #'first)))
+         (let ((item-b (find (first item-a) unit-b :test #'equal :key #'first)))
            (and item-b (= (second item-a) (second item-b)))))))
 
 (defgeneric convert-units (value unit-a &optional unit-b))
