@@ -37,6 +37,5 @@
 (setf (fdefinition 'rerr) #'relative-error)
 (setf (fdefinition '(setf rerr)) #'(setf relative-error))
 
-(defgeneric make-quantity (value error unit))
-(defmethod make-quantity ((value number) (error number) unit)
+(defun make-quantity (&key (value 0) (error 0) (unit nil))
   (make-instance 'quantity :value value :error error :unit unit))
