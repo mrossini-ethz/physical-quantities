@@ -166,3 +166,19 @@
   (with-unitless-quantity (val err base :error :absolute)
     (make-instance 'quantity :value (log val base) :error (abs (/ err val (log base))))))
 (export 'qlog)
+
+(defgeneric qsin (number))
+(defmethod qsin ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-instance 'quantity :value (sin val) :error (abs (* (cos val) err)))))
+(defmethod qsin ((number number))
+  (sin number))
+
+(defgeneric qcos (number))
+(defmethod qcos ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-instance 'quantity :value (cos val) :error (abs (* (sin val) err)))))
+(defmethod qcos ((number number))
+  (cos number))
+
+
