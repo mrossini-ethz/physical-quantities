@@ -87,7 +87,7 @@
 
 (defun reduce-unit (unit)
   (if (l> unit 1)
-      (let ((split (split #'(lambda (x) (eql x (caar unit))) unit :key #'first)))
+      (let ((split (split #'(lambda (x) (equal x (caar unit))) unit :key #'first)))
         (let ((sum (loop for item in (first split) summing (second item))))
           (append (if (/= 0 sum) (list (list (caaar split) sum))) (reduce-unit (second split)))))
       unit))
