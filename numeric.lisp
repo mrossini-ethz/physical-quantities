@@ -107,15 +107,20 @@
                        (error "Zero raised to the power of zero!")))
     (t (dup-quantity base :v (expt (value base) power) :e (apply #'add-rerr (loop for i below (abs power) collect base)) :u (power-unit (unit base) power)))))
 (defmethod qpow ((base number) (power quantity))
-  ;; FIXME: error propagation not handled correctly
   (with-unitless-quantity (val err power)
-    (expt base val)))
+    (let ((v (expt base val)))
+      (make-instance 'quantity :value v :error (abs (* v (log base) (ae val err)))))))
 (defmethod qpow ((base quantity) (power quantity))
-  ;; FIXME: error propagation not handled correctly
-  (with-unitless-quantity (val err power)
-    (when (not (integerp val))
-      (error "Cannot raise quantity to a non-integer power!"))
-    (qpow base val)))
+  (with-unitless-quantity (bval berr base)
+    (with-unitless-quantity (pval perr power)
+      (when (not (integerp pval))
+        (error "Cannot raise quantity to a non-integer power!"))
+      (cond
+        ((zerop pval) (if (/= 0 bval)
+                          (make-instance 'quantity :value 1)
+                          (error "Zero raised to the power of zero!")))
+        (t (let ((v (expt bval pval)))
+             (make-instance 'quantity :value v :error (* (abs v) (sqrt (+ (expt (* (/ pval bval) (ae bval berr)) 2) (expt (* (log bval) (ae pval perr)) 2)))) :unit (power-unit (unit base) pval))))))))
 (export 'qpow)
 
 (defgeneric qroot (radicand index))
