@@ -18,44 +18,45 @@
 (defparameter *unit-abbreviation-table* (make-hash-table))
 (export '(*unit-translation-table* *unit-alias-table* *unit-abbreviation-table*))
 
+(defmacro table-entry (key &key (table :translation))
+  `(gethash ,key ,(case table (:translation '*unit-translation-table*) (:alias '*unit-alias-table*) (:abbrev '*unit-abbreviation-table*))))
+
+(defun table-insert (name aliases abbrevs def)
+  ;; Set main entry
+  (setf (gethash name *unit-translation-table*) def)
+  (loop for alias in (mklist aliases) do
+       (setf (gethash alias *unit-alias-table*) name))
+  (loop for abbrev in (mklist abbrevs) do
+       (setf (gethash abbrev *unit-abbreviation-table*) name)))
+
+(defun symbol-prefix (prefix symbols)
+  (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
+
 (defmacro define-units (&body unit-declarations)
   (let (names aliases abbrevs)
-    (with-gensyms (prefix v pbase ppower prefix-abbrev a)
+    (with-gensyms (prefix v)
       `(progn
          ;; Loop over all statements
          ,@(loop for decl in unit-declarations append
-              ;; Destructure each declaration
+                ;; Destructure each declaration
                 (destructuring-bind (name &key def alias abbrev prefix-max prefix-min (base 10)) decl
-                  ;; Add the names, aliases and abbreviations to the respective tables
-                  (append
-                   ;; Bookkeeping of newly defined names, aliases and abbreviations
-                   (progn
-                     (if (have name names) (warn "Unit ~a is already defined." name) (push name names))
-                     (loop for a in (mklist alias) when (have a aliases) do (warn "Unit alias ~a is already defined." a) else do (push a aliases))
-                     (loop for a in (mklist abbrev) when (have a abbrevs) do (warn "Unit abbreviation ~a is already defined." a) else do (push a abbrevs)))
-                   `((setf (gethash ',name *unit-translation-table*) ,(if def `(list ,@(parse-list 'unit-definition def))))
-                     ,@(loop for a in (mklist alias) collect
-                            `(setf (gethash ',a *unit-alias-table*) ',name))
-                     ,@(loop for a in (mklist abbrev) collect
-                            `(setf (gethash ',a *unit-abbreviation-table*) ',name)))
-                   ;; Add the names, aliases and abbreviations with all possible prefixes to the respective tables
-                   `((loop
-                        for ,prefix being the hash-keys of *unit-prefix-table* using (hash-value ,v)
-                        for ,pbase = (first ,v)
-                        for ,ppower = (second ,v)
-                        for ,prefix-abbrev = (third ,v)
-                        when (and ,(or (not prefix-max) `(<= ,ppower ,prefix-max)) ,(or (not prefix-min) `(>= ,ppower ,prefix-min)) ,(if (listp base) `(have ,pbase (list ,@base)) `(= ,base ,pbase))) do
-                        ;; Add main name to *unit-translation-table*
-                          (setf (gethash (symb ,prefix ',name) *unit-translation-table*)
-                                (if (zerop ,ppower)
-                                    ,(if def `(list ,@(parse-list 'unit-definition def)))
-                                    (list (expt ,pbase ,ppower) (list (list ',name 1)))))
-                        ;; Add aliases to *unit-alias-table*, with all possible prefixes, that point to the names in *unit-translation-table*
-                          (loop for ,a in (mklist ',alias) do
-                               (setf (gethash (symb ,prefix ,a) *unit-alias-table*) (symb ,prefix ',name)))
-                        ;; Add abbreviations to *unit-abbreviation-table*, with all possible prefixes, that point to the names in *unit-translation-table*
-                          (loop for ,a in (mklist ',abbrev) do
-                               (setf (gethash (symb ,prefix-abbrev ,a) *unit-alias-table*) (symb ,prefix ',name))))))))))))
+                  `(,@(progn
+                       ;; Bookkeeping of newly defined names, aliases and abbreviations (does not generate code)
+                       (if (have name names) (warn "Unit ~a is already defined." name) (push name names))
+                       (loop for a in (mklist alias) when (have a aliases) do (warn "Unit alias ~a is already defined." a) else do (push a aliases))
+                       (loop for a in (mklist abbrev) when (have a abbrevs) do (warn "Unit abbreviation ~a is already defined." a) else do (push a abbrevs)))
+                      ;; Add the names, aliases and abbreviations to the respective tables
+                      (table-insert ',name ',alias ',abbrev (list ,@(parse-list 'unit-definition def)))
+                      (loop
+                         for ,prefix being the hash-keys of *unit-prefix-table* using (hash-value ,v)
+                         when (and ,(or (not prefix-max) `(<= (second ,v) ,prefix-max))
+                                   ,(or (not prefix-min) `(>= (second ,v) ,prefix-min))
+                                   ,(if (listp base) `(have (first ,v) (list ,@base)) `(= ,base (first ,v)))) do
+                         ;; Add main name to *unit-translation-table*
+                           (table-insert (symb ,prefix ',name)
+                                         (symbol-prefix ',prefix ',alias)
+                                         (symbol-prefix (third ,v) ',abbrev)
+                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (list ',name 1)))))))))))))
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
