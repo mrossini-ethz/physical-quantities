@@ -181,4 +181,32 @@
 (defmethod qcos ((number number))
   (cos number))
 
+(defgeneric qtan (number))
+(defmethod qtan ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-quantity :value (tan val) :error (abs (/ err (expt (cos val) 2))))))
+(defmethod qtan ((number number))
+  (tan number))
+
+(defgeneric qasin (number))
+(defmethod qasin ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-quantity :value (asin val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
+(defmethod qasin ((number number))
+  (asin number))
+
+(defgeneric qacos (number))
+(defmethod qacos ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-quantity :value (acos val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
+(defmethod qacos ((number number))
+  (acos number))
+
+(defgeneric qatan (number))
+(defmethod qatan ((number quantity))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-quantity :value (atan val) :error (abs (/ err (+ 1 (expt val 2)))))))
+(defmethod qatan ((number number))
+  (atan number))
+
 
