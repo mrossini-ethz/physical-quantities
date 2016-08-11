@@ -17,12 +17,16 @@
                   :error ,(if (or (null e) (eql q e)) `(error-direct ,q) e)
                   :unit ,(if (or (null u) (eql q u)) `(copy-tree (unit ,q)) u)))
 
-(defmacro with-unitless-quantity ((val err quantity) &body body)
+(defmacro with-unitless-quantity ((val err quantity &key error) &body body)
   (with-gensyms (expansion factor)
     `(multiple-value-bind (,expansion ,factor) (expand-unit (unit ,quantity))
        (when ,expansion
          (error "Quantity is required to be without unit!"))
-       (let ((,val (* ,factor (value ,quantity))) (,err (if (minusp (error-direct ,quantity)) (error-direct ,quantity) (* ,factor (error-direct ,quantity)))))
+       (let ((,val (* ,factor (value ,quantity)))
+             (,err ,(case error
+                          (:absolute `(* ,factor (aerr ,quantity)))
+                          (:relative `(rerr ,quantity))
+                          (t `(if (minusp (error-direct ,quantity)) (error-direct ,quantity) (* ,factor (error-direct ,quantity)))))))
          ,@body))))
 
 ;; Actual functions -----------------------------------------------------------------
@@ -107,12 +111,12 @@
                        (error "Zero raised to the power of zero!")))
     (t (dup-quantity base :v (expt (value base) power) :e (apply #'add-rerr (loop for i below (abs power) collect base)) :u (power-unit (unit base) power)))))
 (defmethod qpow ((base number) (power quantity))
-  (with-unitless-quantity (val err power)
+  (with-unitless-quantity (val err power :error :absolute)
     (let ((v (expt base val)))
-      (make-instance 'quantity :value v :error (abs (* v (log base) (ae val err)))))))
+      (make-instance 'quantity :value v :error (abs (* v (log base) err))))))
 (defmethod qpow ((base quantity) (power quantity))
-  (with-unitless-quantity (bval berr base)
-    (with-unitless-quantity (pval perr power)
+  (with-unitless-quantity (bval berr base :error :absolute)
+    (with-unitless-quantity (pval perr power :error :absolute)
       (when (not (integerp pval))
         (error "Cannot raise quantity to a non-integer power!"))
       (cond
@@ -120,7 +124,7 @@
                           (make-instance 'quantity :value 1)
                           (error "Zero raised to the power of zero!")))
         (t (let ((v (expt bval pval)))
-             (make-instance 'quantity :value v :error (* (abs v) (sqrt (+ (expt (* (/ pval bval) (ae bval berr)) 2) (expt (* (log bval) (ae pval perr)) 2)))) :unit (power-unit (unit base) pval))))))))
+             (make-instance 'quantity :value v :error (* (abs v) (sqrt (+ (expt (* (/ pval bval) berr) 2) (expt (* (log bval) perr) 2)))) :unit (power-unit (unit base) pval))))))))
 (export 'qpow)
 
 (defgeneric qroot (radicand index))
@@ -147,18 +151,18 @@
 
 (defgeneric qexp (quantity))
 (defmethod qexp ((q quantity))
-  (with-unitless-quantity (val err q)
-    (make-instance 'quantity :value (exp val) :error (* (exp val) (ae val err)))))
+  (with-unitless-quantity (val err q :error :absolute)
+    (make-instance 'quantity :value (exp val) :error (* (exp val) err))))
 (export 'qexp)
 
 (defgeneric qln (number))
 (defmethod qln ((number quantity))
-  (with-unitless-quantity (val err number)
-    (make-instance 'quantity :value (log val) :error (abs (/ (ae val err) val)))))
+  (with-unitless-quantity (val err number :error :absolute)
+    (make-instance 'quantity :value (log val) :error (abs (/ err val)))))
 (export 'qln)
 
 (defgeneric qlog (number base))
 (defmethod qlog ((q quantity) (base number))
-  (with-unitless-quantity (val err base)
-    (make-instance 'quantity :value (log val base) :error (abs (/ (ae val err) val (log base))))))
+  (with-unitless-quantity (val err base :error :absolute)
+    (make-instance 'quantity :value (log val base) :error (abs (/ err val (log base))))))
 (export 'qlog)
