@@ -250,3 +250,9 @@
     (make-quantity :value (atanh val) :error (abs (/ err (- 1 (expt val 2)))))))
 (defmethod qatanh ((number number))
   (atanh number))
+
+(defgeneric qabs (number))
+(defmethod qabs ((number quantity))
+  (dup-quantity number :v (abs (value number))))
+(defmethod qabs ((number number))
+  (abs number))
