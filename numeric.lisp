@@ -173,6 +173,7 @@
     (make-quantity :value (sin val) :error (abs (* (cos val) err)))))
 (defmethod qsin ((number number))
   (sin number))
+(export 'qsin)
 
 (defgeneric qcos (number))
 (defmethod qcos ((number quantity))
@@ -180,6 +181,7 @@
     (make-quantity :value (cos val) :error (abs (* (sin val) err)))))
 (defmethod qcos ((number number))
   (cos number))
+(export 'qcos)
 
 (defgeneric qtan (number))
 (defmethod qtan ((number quantity))
@@ -187,6 +189,7 @@
     (make-quantity :value (tan val) :error (abs (/ err (expt (cos val) 2))))))
 (defmethod qtan ((number number))
   (tan number))
+(export 'qtan)
 
 (defgeneric qasin (number))
 (defmethod qasin ((number quantity))
@@ -194,6 +197,7 @@
     (make-quantity :value (asin val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
 (defmethod qasin ((number number))
   (asin number))
+(export 'qasin)
 
 (defgeneric qacos (number))
 (defmethod qacos ((number quantity))
@@ -201,6 +205,7 @@
     (make-quantity :value (acos val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
 (defmethod qacos ((number number))
   (acos number))
+(export 'qacos)
 
 (defgeneric qatan (number))
 (defmethod qatan ((number quantity))
@@ -208,6 +213,7 @@
     (make-quantity :value (atan val) :error (abs (/ err (+ 1 (expt val 2)))))))
 (defmethod qatan ((number number))
   (atan number))
+(export 'qatan)
 
 (defgeneric qsinh (number))
 (defmethod qsinh ((number quantity))
@@ -215,6 +221,7 @@
     (make-quantity :value (sinh val) :error (abs (* (cosh val) err)))))
 (defmethod qsinh ((number number))
   (sinh number))
+(export 'qsinh)
 
 (defgeneric qcosh (number))
 (defmethod qcosh ((number quantity))
@@ -222,6 +229,7 @@
     (make-quantity :value (cosh val) :error (abs (* (sinh val) err)))))
 (defmethod qcosh ((number number))
   (cosh number))
+(export 'qcosh)
 
 (defgeneric qtanh (number))
 (defmethod qtanh ((number quantity))
@@ -229,6 +237,7 @@
     (make-quantity :value (tanh val) :error (abs (* (- 1 (expt (tanh val) 2)) err)))))
 (defmethod qtanh ((number number))
   (tanh number))
+(export 'qtanh)
 
 (defgeneric qasinh (number))
 (defmethod qasinh ((number quantity))
@@ -236,6 +245,7 @@
     (make-quantity :value (asinh val) :error (abs (/ err (sqrt (+ (expt val 2) 1)))))))
 (defmethod qasinh ((number number))
   (asinh number))
+(export 'qasinh)
 
 (defgeneric qacosh (number))
 (defmethod qacosh ((number quantity))
@@ -243,6 +253,7 @@
     (make-quantity :value (acosh val) :error (abs (/ err (sqrt (- (expt val 2) 1)))))))
 (defmethod qacosh ((number number))
   (acosh number))
+(export 'qacosh)
 
 (defgeneric qatanh (number))
 (defmethod qatanh ((number quantity))
@@ -250,9 +261,11 @@
     (make-quantity :value (atanh val) :error (abs (/ err (- 1 (expt val 2)))))))
 (defmethod qatanh ((number number))
   (atanh number))
+(export 'qatanh)
 
 (defgeneric qabs (number))
 (defmethod qabs ((number quantity))
   (dup-quantity number :v (abs (value number))))
 (defmethod qabs ((number number))
   (abs number))
+(export 'qabs)
