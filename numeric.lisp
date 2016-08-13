@@ -29,7 +29,7 @@
                           (t `(if (minusp (error-direct ,quantity)) (error-direct ,quantity) (* ,factor (error-direct ,quantity)))))))
          ,@body))))
 
-;; Actual functions -----------------------------------------------------------------
+;; Wrapper functions -----------------------------------------------------------------
 
 (defun quantityp (object)
   (eql (type-of object) 'quantity))
@@ -277,3 +277,29 @@
 (defmethod qabs ((number number))
   (abs number))
 (export 'qabs)
+
+;; Rounding functions ---------------------------------------------------------------
+
+(defun round-to (number magnitude digits)
+  (* (round number (expt 10 (- magnitude (- digits 1)))) (expt 10 (- magnitude (1- digits)))))
+
+(defun qround (quantity)
+  ;; Rounding rule from Review of Particle Physics, Introduction, Section 5.3 by the Particle Data Group (http://pdg.lbl.gov):
+  ;; "The basic rule states that if the three highest order
+  ;; digits of the error lie between 100 and 354, we round to
+  ;; two significant digits. If they lie between 355 and 949, we
+  ;; round to one significant digit. Finally, if they lie between
+  ;; 950 and 999, we round up to 1000 and keep two significant
+  ;; digits. In all cases, the central value is given with a precision
+  ;; that matches that of the error. So, for example, the result
+  ;; (coming from an average) 0.827 +/- 0.119 would appear as
+  ;; 0.83 +/- 0.12, while 0.827 +/- 0.367 would turn into 0.8 +/- 0.4."
+  (when (zerop (error-direct quantity))
+    (error "Cannot round quantity where the error is zero!"))
+  (let* ((magn (floor (log (aerr quantity) 10)))
+         (test (truncate (/ (aerr quantity) (expt 10 (- magn 2)))))
+         (digi (if (or (<= test 354) (>= test 950)) 2 1)))
+    (when (>= test 950)
+      (incf magn))
+    (values (dup-quantity quantity :v (round-to (value quantity) magn digi) :e (round-to (aerr quantity) magn digi)) magn digi)))
+(export 'qround)
