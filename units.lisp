@@ -53,7 +53,7 @@
                            (table-insert (symb ,prefix ',name)
                                          (symbol-prefix ,prefix ',alias)
                                          (symbol-prefix (third ,v) ',abbrev)
-                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (list ,(symbol-name name) 1)))))))))))))
+                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (make-uf ,(symbol-name name) 1)))))))))))))
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
@@ -86,45 +86,48 @@
     `(,(apply #'* f conv) ,@units)))
 
 (defun reduce-unit (unit)
+  ;; Reduces the powers of duplicate unit factors in a given unit, e.g. km^2 / km -> km, but m / km -> m / km. No unit lookup is made.
   (if (l> unit 1)
-      (let ((split (split #'(lambda (x) (equal x (caar unit))) unit :key #'first)))
-        (let ((sum (loop for item in (first split) summing (second item))))
-          (append (if (/= 0 sum) (list (list (caaar split) sum))) (reduce-unit (second split)))))
+      ;; Split the list of unit factors into those that have the same unit as the first one and those that do not
+      (let* ((name (uf-unit (first unit)))
+             (split (split #'(lambda (x) (equal x name)) unit :key #'uf-unit)))
+        ;; Sum the powers of the first set
+        (let ((sum (loop for item in (first split) summing (uf-power item))))
+          ;; Append the resulting unit-factor
+          (append (if (/= 0 sum) (list (make-uf name sum))) (reduce-unit (second split)))))
+      ;; Only one unit factor. Keep everything as is.
       unit))
 
 (defun expand-unit-factor (factor)
-  ;; Input:
-  ;; - `factor' is a unit factor, e.g. (kJ 2)
-  ;; Output:
-  ;; - a list of conversion factor and unit factors (1000 (kg 2) (m 4) (s -4))
-  (destructuring-bind (unit power) factor
-    ;; Query the unit translation table
-    (with-unit-lookup (base result unit)
-      ;; When result is nil the unit is a base unit
-      (if result
-          ;; Not a base unit
-          (destructuring-bind (conv unit-factors) result
-            ;; Expand the unit collecting all conversion factors
-            (apply #'collect-factors (expt conv power)
-                   (loop for uf in unit-factors collect (expand-unit-factor `(,(first uf) ,(* (second uf) power))))))
-          ;; Base unit, no recursion
-          (list 1 `(,base ,power))))))
+  ;; Converts a single unit factor into its expansion of base units, together with a conversion factor
+  ;; Query the unit translation table
+  (with-unit-lookup (base expansion (uf-unit factor))
+    ;; When expansion is nil the unit is a base unit
+    (if expansion
+        ;; Not a base unit
+        (destructuring-bind (conv unit-factors) expansion
+          ;; Expand the unit collecting all conversion factors
+          (apply #'collect-factors (expt conv (uf-power factor))
+                 (loop for uf in unit-factors collect (expand-unit-factor (uf-pow uf (uf-power factor))))))
+        ;; Base unit, no recursion
+        (list 1 (make-uf base (uf-power factor))))))
 
 (defun expand-unit (unit)
-  ;; `unit' is a list of unit factors, e.g. ((kN 1) (mm 1))
+  ;; Expands the given unit into base units and reduces them
   (destructuring-bind (conv &rest unit-factors)
       (apply #'collect-factors 1 (loop for factor in unit collect (expand-unit-factor factor)))
     (values (reduce-unit unit-factors) conv)))
 
 (defun dereference-unit (unit)
   ;; Takes a unit and looks up aliases and abbreviations of unit factors and replaces them with the base unit.
-  (loop for uf in unit collect `(,(lookup-unit (first uf)) ,(second uf))))
+  (loop for uf in unit collect (make-uf (lookup-unit (uf-unit uf)) (uf-power uf))))
 
 (defun units-equal (unit-a unit-b)
+  ;; FIXME: this function is broken
   (when (ll= unit-a unit-b)
-    (loop for item-a in unit-a always
-         (let ((item-b (find (first item-a) unit-b :test #'equal :key #'first)))
-           (and item-b (= (second item-a) (second item-b)))))))
+    (loop for uf-a in unit-a always
+         (let ((uf-b (find (uf-unit uf-a) unit-b :test #'equal :key #'uf-unit)))
+           (and uf-b (= (uf-power uf-a) (uf-power uf-b)))))))
 
 (defgeneric convert-units (value unit-a &optional unit-b))
 (defmethod convert-units ((value number) unit-a &optional unit-b)
@@ -143,7 +146,7 @@
       (make-quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
 (defun power-unit (unit power)
-  (loop for uf in unit collect `(,(first uf) ,(* (second uf) power))))
+  (loop for uf in unit collect (uf-pow uf power)))
 
 (defun multiply-units (&rest units)
   (reduce-unit (apply #'append units)))
@@ -155,13 +158,13 @@
 
 (defun root-unit (unit index)
   (loop for uf in unit
-     when (zerop (rem (second uf) index))
-     collect `(,(first uf) ,(/ (second uf) index))
+     when (zerop (rem (uf-power uf) index))
+     collect (make-uf (uf-unit uf) (/ (uf-power uf) index))
      else
      do (error (format nil "Cannot extract the ~:r root of the unit ~a!" index unit))))
 
 (defun sort-unit (unit)
-  (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'second))
+  (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
 
 (defun print-unit (unit)
   (with-output-to-string (stream)
@@ -171,7 +174,7 @@
        when (plusp i) do (format stream " ")
        do
          (cond
-            ((and (minusp (second uf)) (= (second uf) -1)) (format stream "/ ~a" (first uf)))
-            ((and (minusp (second uf)) (< (second uf) -1)) (format stream "/ ~a ^ ~a" (first uf) (- (second uf))))
-            ((= (second uf) 1) (format stream "~a" (first uf)))
-            (t (format stream "~a ^ ~a" (first uf) (second uf)))))))
+            ((and (minusp (uf-power uf)) (= (uf-power uf) -1)) (format stream "/ ~a" (uf-unit uf)))
+            ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
+            ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
+            (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf)))))))
