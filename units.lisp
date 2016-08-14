@@ -123,11 +123,11 @@
   (loop for uf in unit collect (make-uf (lookup-unit (uf-unit uf)) (uf-power uf))))
 
 (defun units-equal (unit-a unit-b)
-  ;; FIXME: this function is broken
-  (when (ll= unit-a unit-b)
-    (loop for uf-a in unit-a always
-         (let ((uf-b (find (uf-unit uf-a) unit-b :test #'equal :key #'uf-unit)))
-           (and uf-b (= (uf-power uf-a) (uf-power uf-b)))))))
+  ;; Reduces both units and compares the unit factors for equality (in unit and power)
+  (let ((a (reduce-unit unit-a)) (b (reduce-unit unit-b)))
+    (when (ll= a b)
+      (loop for uf-a in a always
+           (have uf-a b :test #'uf-equal)))))
 
 (defgeneric convert-units (value unit-a &optional unit-b))
 (defmethod convert-units ((value number) unit-a &optional unit-b)
