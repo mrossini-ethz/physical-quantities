@@ -7,10 +7,9 @@
   (power 0 :type integer))
 
 (defun uf-pow (unit-factor power)
+  ;; Raises the unit factor to the given power
   (make-uf (uf-unit unit-factor) (* (uf-power unit-factor) power)))
 
-(defun uf-same (a b)
-  (equal (uf-unit a) (uf-unit b)))
-
 (defun uf-equal (a b)
+  ;; Tests for equality in the two unit factors by looking at both uf-unit and uf-power
   (and (equal (uf-unit a) (uf-unit b)) (= (uf-power a) (uf-power b))))
