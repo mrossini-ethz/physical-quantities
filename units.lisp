@@ -116,6 +116,10 @@
       (apply #'collect-factors 1 (loop for factor in unit collect (expand-unit-factor factor)))
     (values (reduce-unit unit-factors) conv)))
 
+(defun dereference-unit (unit)
+  ;; Takes a unit and looks up aliases and abbreviations of unit factors and replaces them with the base unit.
+  (loop for uf in unit collect `(,(lookup-unit (first uf)) ,(second uf))))
+
 (defun units-equal (unit-a unit-b)
   (when (ll= unit-a unit-b)
     (loop for item-a in unit-a always
