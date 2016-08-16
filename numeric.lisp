@@ -278,6 +278,23 @@
   (abs number))
 (export 'qabs)
 
+;; Q-OP macros and functions --------------------------------------------------------
+
+(defun q-op-insert (tree)
+  ;; Very simple code walker that replaces numeric operations like + with q+ etc.
+  (let ((tree (macroexpand tree)))
+    (macrolet ((qcase ((form) &rest symbols) `(case ,form ,@(loop for s in symbols collect `(,s ',(symb "Q" s))) (t ,form))))
+      `(,@(loop for leaf in tree
+             for n upfrom 0 collect
+               (cond
+                 ((listp leaf) (q-op-insert leaf))
+                 ((zerop n) (qcase (leaf) + - * / exp expt log sqrt sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh))
+                 (t leaf)))))))
+
+(defmacro qop (qform)
+  (funcall #'q-op-insert qform))
+(export 'qop)
+
 ;; Rounding functions ---------------------------------------------------------------
 
 (defun round-to (number magnitude digits)
