@@ -5,6 +5,7 @@
 (defstruct (unit-factor (:conc-name uf-) (:constructor make-uf (unit power)))
   (unit "" :type string)
   (power 0 :type integer))
+(export '(uf-unit uf-power))
 
 (defun uf-pow (unit-factor power)
   ;; Raises the unit factor to the given power
