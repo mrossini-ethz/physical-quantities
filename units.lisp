@@ -167,14 +167,21 @@
   (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
 
 (defun print-unit (unit)
-  (with-output-to-string (stream)
-    (loop
-       for uf in (sort-unit (copy-tree unit))
-       for i upfrom 0
-       when (plusp i) do (format stream " ")
-       do
-         (cond
-            ((and (minusp (uf-power uf)) (= (uf-power uf) -1)) (format stream "/ ~a" (uf-unit uf)))
-            ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
-            ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
-            (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf)))))))
+  ;; Prints the given unit in human readable form
+  (if unit
+      ;; List of unit factors is not empty
+      (with-output-to-string (stream)
+        ;; Loop over the unit factors
+        (loop
+           for uf in (sort-unit (copy-tree unit))
+           for i upfrom 0
+           ;; Insert a space unless it's before the first unit factor
+           when (plusp i) do (format stream " ")
+           do
+             (cond
+               ((and (minusp (uf-power uf)) (= (uf-power uf) -1)) (format stream "/ ~a" (uf-unit uf)))
+               ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
+               ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
+               (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf))))))
+      ;; List of unit factors is empty, therefore unit 1
+      "1"))
