@@ -297,10 +297,12 @@
 
 ;; Rounding functions ---------------------------------------------------------------
 
-(defun round-to (number magnitude digits)
-  (* (round number (expt 10 (- magnitude (- digits 1)))) (expt 10 (- magnitude (1- digits)))))
+(defun round-to (number digits &optional place)
+  (unless place
+    (setf place (floor (log number 10))))
+  (* (round number (expt 10 (- place (- digits 1)))) (expt 10 (- place (1- digits)))))
 
-(defun qround (quantity)
+(defun qround (quantity &key digits place)
   ;; Rounding rule from Review of Particle Physics, Introduction, Section 5.3 by the Particle Data Group (http://pdg.lbl.gov):
   ;; "The basic rule states that if the three highest order
   ;; digits of the error lie between 100 and 354, we round to
@@ -311,12 +313,26 @@
   ;; that matches that of the error. So, for example, the result
   ;; (coming from an average) 0.827 +/- 0.119 would appear as
   ;; 0.83 +/- 0.12, while 0.827 +/- 0.367 would turn into 0.8 +/- 0.4."
-  (when (zerop (error-direct quantity))
-    (error "Cannot round quantity where the error is zero!"))
-  (let* ((magn (floor (log (aerr quantity) 10)))
-         (test (truncate (/ (aerr quantity) (expt 10 (- magn 2)))))
-         (digi (if (or (<= test 354) (>= test 950)) 2 1)))
-    (when (>= test 950)
-      (incf magn))
-    (values (dup-quantity quantity :v (round-to (value quantity) magn digi) :e (round-to (aerr quantity) magn digi)) magn digi)))
+  (cond
+    ;; Neither digits nor place are specified
+    ((and (not place) (not digits))
+     ;; Round to the nearest integer
+     (setf place 0)
+     (setf digits 1))
+    ;; Place is not specified
+    ((not place)
+     ;; Determine the place from either the error or the value of the quantity
+     (setf place (floor (log (if (plusp (error-direct quantity)) (aerr quantity) (value quantity)) 10))))
+    ;; Digits are not specified
+    ((not digits)
+     (cond
+       ;; Determine digits through error
+       ((plusp (error-direct quantity))
+        (let ((test (truncate (/ (aerr quantity) (expt 10 (- place 2))))))
+          (setf digits (if (or (<= test 354) (>= test 950)) 2 1))
+          (when (>= test 950)
+            (incf place))))
+       ;; Set digits to 1
+       (t (setf digits 1)))))
+  (values (dup-quantity quantity :v (round-to (value quantity) digits place) :e (round-to (aerr quantity) digits place)) digits place))
 (export 'qround)
