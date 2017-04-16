@@ -2,7 +2,7 @@
 
 (defun read-quantity (stream char1 char2)
   (declare (ignore char1 char2))
-  (let ((expr (parse-list 'quantity (read stream t nil t))))
+  (let ((expr (parseq 'quantity (read stream t nil t))))
     (unless expr
       (error "Syntax error in quantity definition."))
     (destructuring-bind ((val err) unit-a unit-b) expr

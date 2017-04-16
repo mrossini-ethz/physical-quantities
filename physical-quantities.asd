@@ -4,7 +4,7 @@
   :description "Use lisp numbers for physical quantities with unit and error."
   :version "0.1"
   :author "Marco Rossini"
-  :depends-on ("parser")
+  :depends-on ("parseq")
   :components ((:file "package")
                (:file "utils" :depends-on ("package"))
                (:file "unit-factor" :depends-on ("package"))

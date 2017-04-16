@@ -43,7 +43,7 @@
                        (loop for a in (mklist alias) when (have a aliases) do (warn "Unit alias ~a is already defined." a) else do (push a aliases))
                        (loop for a in (mklist abbrev) when (have a abbrevs) do (warn "Unit abbreviation ~a is already defined." a) else do (push a abbrevs)))
                       ;; Add the names, aliases and abbreviations to the respective tables
-                      (table-insert ',name ',alias ',abbrev (list ,@(parse-list 'unit-definition def)))
+                      (table-insert ',name ',alias ',abbrev (list ,@(parseq 'unit-definition def)))
                       (loop
                          for ,prefix being the hash-keys of *unit-prefix-table* using (hash-value ,v)
                          when (and ,(or (not prefix-max) `(<= (second ,v) ,prefix-max))

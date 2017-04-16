@@ -1,3 +1,3 @@
 (defpackage :physical-quantities
-  (:use :common-lisp :parser)
+  (:use :common-lisp :parseq)
   (:nicknames :physq :pquant :pq))
