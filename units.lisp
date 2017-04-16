@@ -10,6 +10,7 @@
      ,@(loop for decl in prefix-declarations collect
             (destructuring-bind (name abbr power &key (base 10)) decl
               `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr)))))))
+(export 'define-unit-prefixes)
 
 ;; Unit database -------------------------------------------------------------------
 
@@ -54,6 +55,7 @@
                                          (symbol-prefix ,prefix ',alias)
                                          (symbol-prefix (third ,v) ',abbrev)
                                          (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (make-uf ,(symbol-name name) 1)))))))))))))
+(export 'define-units)
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
