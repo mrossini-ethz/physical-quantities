@@ -76,6 +76,21 @@
   `(multiple-value-bind (,base-unit ,translation) (lookup-unit ,unit)
      ,@body))
 
+;; Unit interface ------------------------------------------------------------------
+
+(defun make-unit (&rest unit-factors)
+  (loop for uf in unit-factors collect
+       (cond
+         ((unit-factor-p uf) uf)
+         ((and (listp uf) (l= uf 2) (stringp (first uf)) (integerp (second uf))) (make-uf (lookup-unit (first uf)) (second uf)))
+         ((and (listp uf) (l= uf 2) (symbolp (first uf)) (integerp (second uf))) (make-uf (lookup-unit (symbol-name (first uf))) (second uf)))
+         (t (error "Invalid unit factor specified.")))))
+(export 'make-unit)
+
+(defun unitp (object)
+  (and (listp object) (every #'unit-factor-p object)))
+(export 'unitp)
+
 ;; Unit expansion ------------------------------------------------------------------
 
 (defun collect-factors (f &rest expanded-unit-factors)
@@ -131,21 +146,27 @@
       (loop for uf-a in a always
            (have uf-a b :test #'uf-equal)))))
 
-(defgeneric convert-units (value unit-a &optional unit-b))
-(defmethod convert-units ((value number) unit-a &optional unit-b)
+(defgeneric convert-unit% (value unit-a &optional unit-b))
+(defmethod convert-unit% ((value number) unit-a &optional unit-b)
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
         (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit unit-a) (print-unit unit-b) base-unit-a base-unit-b))
       (/ (* value conv-a) conv-b))))
-(defmethod convert-units ((q quantity) unit-a &optional unit-b)
+(defmethod convert-unit% ((q quantity) unit-a &optional unit-b)
   (when unit-b
     (error (format nil "Overdefined unit conversion!")))
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
         (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit (unit q)) (print-unit unit-a) base-unit-a base-unit-b))
-      (make-quantity :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
+      (make-quantity% :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
+
+(defun convert-unit (quantity unit)
+  (unless (quantityp quantity)
+    (error "Quantity must be of type quantity."))
+  (convert-unit% quantity (if (unitp unit) unit (apply #'make-unit unit))))
+(export 'convert-unit)
 
 (defun power-unit (unit power)
   (loop for uf in unit collect (uf-pow uf power)))

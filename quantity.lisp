@@ -39,5 +39,16 @@
 (setf (fdefinition '(setf rerr)) #'(setf relative-error))
 (export '(absolute-error relative-error aerr rerr))
 
-(defun make-quantity (&key (value 0) (error 0) (unit nil))
+;; Internal function to make quantities
+(defun make-quantity% (&key (value 0) (error 0) (unit nil))
   (make-instance 'quantity :value value :error error :unit unit))
+
+(defun make-quantity (&key (value 0) (error 0) (error-type :absolute) (unit ()))
+  (unless (realp value)
+    (error "The value of a quantity must be a real number."))
+  (unless (and (realp error) (>= error 0))
+    (error "The error of a quantity must be a positive real number."))
+  (unless (have error-type '(:absolute :relative))
+    (error "The error type for a quantity must be either :absolute or :relative."))
+  (make-instance 'quantity :value value :error (if (eql error-type :absolute) error (- error)) :unit (if (unitp unit) unit (apply #'make-unit unit))))
+(export 'make-quantity)

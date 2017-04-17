@@ -109,6 +109,21 @@ To retrieve value/magnitude, uncertainty/error and unit of an object of type `qu
 
 These are all places, so they are `setf`able. Note that setting the absolute uncertainty will affect the relative uncertainty and vice versa. Also note that it is an error accessing the relative error when the value/magnitude is zero.
 
+## Machine interface
+The macros `(quantity ...)` and `#q(...)` are intended as convenience for humans. They are not very lispy. To create quantities in a manner that is suitable for machines, the function `(make-quantity ...)` is defined:
+```
+(make-quantity :value 1 :error 0.1 :error-type :absolute :unit '((m 1) (s -1)))
+```
+This is equivalent to `#q(1 +/- 0.1 m / s)`. Note that the unit is a list of unit factors with each unit factor being a symbol that stands for a unit and a power. Being a function, the arguments are evaluated before the `quantity` is created. This allows the unit to be a variable. Units can be created with the `(make-unit ...)` function:
+```
+(make-unit '(m 1) '(s -1))
+```
+Units can be converted using the `(convert-unit ...)` function. It accepts either a unit object or a list of unit factors:
+```
+(convert-unit v (make-unit '(km 1) '(h -1)))
+(convert-unit v '((km 1) (h -1)))
+```
+
 ## Defining new units
 New units can be defined using the `(define-units ...)` macro. Each enclosed form defines a new unit:
 ```
