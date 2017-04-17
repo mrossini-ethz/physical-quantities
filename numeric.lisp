@@ -144,7 +144,6 @@
 
 (defgeneric qexpt (base power))
 (defmethod qexpt ((base quantity) (power quantity))
-  (print 'hello)
   (unless (rationalp (value power))
     (error "Exponent must be a rational quantity!"))
   (let ((n (numerator (value power))) (d (denominator (value power))))
