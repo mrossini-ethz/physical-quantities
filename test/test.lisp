@@ -254,6 +254,22 @@
     (condition= (qexpt #q(27 m) #q(1/3 +/- 0.01)) simple-error)
     (condition= (qexpt #q(-27) #q(1/3 +/- 0.01)) simple-error)
     (q= (qexpt #q(27 +/- 0.2) #q(1/3 +/- 0.01)) :value 3 :unit ())
+
+    ;; Logarithm qln
+    (= (qln 2) (log 2))
+    (q= (qln #q(2 +/- 0.1)) :value (log 2))
+
+    ;; Logarithm qlog, reals
+    (= (qlog 100 10) 2)
+    ;; Logarithm qlog, number: quantity, base: real
+    (q= (qlog #q(100 +/- 0.1) 10) :value 2 :unit ())
+    (condition= (qlog #q(100 +/- 0.1 m) 10) simple-error)
+    ;; Logarithm qlog, number: real, base: quantity
+    (q= (qlog 100 #q(10 +/- 0.1)) :value 2 :unit ())
+    (condition= (qlog 100 #q(10 +/- 0.1 m)) simple-error)
+    ;; Logarithm qlog, number: quantity, base: quantity
+    (q= (qlog #q(100 +/- 1) #q(10 +/- 0.1)) :value 2 :unit ())
+    (condition= (qlog #q(100 +/- 1 m)  #q(10 +/- 0.1 m)) simple-error)
 ))
 
 (define-test physical-quantities-test ()
