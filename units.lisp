@@ -22,43 +22,67 @@
 (defparameter *unit-abbreviation-table* (make-hash-table :test 'equal))
 (export '(*unit-translation-table* *unit-alias-table* *unit-abbreviation-table*))
 
+(defun clear-units ()
+  (setf *unit-prefix-table* (make-hash-table :test 'equal))
+  (setf *unit-translation-table* (make-hash-table :test 'equal))
+  (setf *unit-alias-table* (make-hash-table :test 'equal))
+  (setf *unit-abbreviation-table* (make-hash-table :test 'equal)))
+
 (defun table-insert (name aliases abbrevs def)
   ;; Set main entry
   (setf (gethash (symbol-name name) *unit-translation-table*) def)
+  ;; Set aliases
   (loop for alias in (mklist aliases) do
        (setf (gethash (symbol-name alias) *unit-alias-table*) (symbol-name name)))
+  ;; Set abbreviations
   (loop for abbrev in (mklist abbrevs) do
        (setf (gethash (symbol-name abbrev) *unit-abbreviation-table*) (symbol-name name))))
+
+(defun has-key (key hash-table)
+  (second (multiple-value-list (gethash key hash-table))))
+
+(defun unit-hash-key-check (key)
+  (or (has-key (symbol-name key) *unit-translation-table*)
+      (has-key (symbol-name key) *unit-alias-table*)
+      (has-key (symbol-name key) *unit-abbreviation-table*)))
+
+(defun table-check (name aliases abbrevs)
+  (when (unit-hash-key-check name)
+    (error "Unit ~a is already defined." name))
+  (loop for alias in (mklist aliases)
+     when (unit-hash-key-check alias)
+     do (error "Unit ~a is already defined." alias))
+  (loop for abbrev in (mklist abbrevs)
+     when (unit-hash-key-check abbrev)
+     do (error "Unit ~a is already defined." abbrev)))
 
 (defun symbol-prefix (prefix symbols)
   (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
 
-(defmacro define-units (&body unit-declarations)
-  (let (names aliases abbrevs)
-    (with-gensyms (prefix v)
-      `(progn
-         ;; Loop over all statements
-         ,@(loop for decl in unit-declarations append
-                ;; Destructure each declaration
-                (destructuring-bind (name &key def alias abbrev prefix-max prefix-min (base 10)) decl
-                  `(,@(progn
-                       ;; Bookkeeping of newly defined names, aliases and abbreviations (does not generate code)
-                       (if (have name names) (warn "Unit ~a is already defined." name) (push name names))
-                       (loop for a in (mklist alias) when (have a aliases) do (warn "Unit alias ~a is already defined." a) else do (push a aliases))
-                       (loop for a in (mklist abbrev) when (have a abbrevs) do (warn "Unit abbreviation ~a is already defined." a) else do (push a abbrevs)))
-                      ;; Add the names, aliases and abbreviations to the respective tables
-                      (table-insert ',name ',alias ',abbrev (list ,@(parseq 'unit-definition def)))
-                      (loop
-                         for ,prefix being the hash-keys of *unit-prefix-table* using (hash-value ,v)
-                         when (and ,(or (not prefix-max) `(<= (second ,v) ,prefix-max))
-                                   ,(or (not prefix-min) `(>= (second ,v) ,prefix-min))
-                                   ,(if (listp base) `(have (first ,v) (list ,@base)) `(= ,base (first ,v)))) do
-                         ;; Add main name to *unit-translation-table*
-                           (table-insert (symb ,prefix ',name)
-                                         (symbol-prefix ,prefix ',alias)
-                                         (symbol-prefix (third ,v) ',abbrev)
-                                         (if (zerop (second ,v)) ',def (list (expt (first ,v) (second ,v)) (list (make-uf ,(symbol-name name) 1)))))))))))))
-(export 'define-units)
+(defun define-unit% (name &key def aliases abbreviations prefixes base overwrite)
+  ;; First pass to check for conflicts
+  (unless overwrite
+    ;; Check principal entry
+    (table-check name aliases abbreviations)
+    ;; Iterate over all prefixes
+    (loop for prefix being the hash-keys of *unit-prefix-table* using (hash-value prefix-value)
+       ;; Define the hash keys
+       for name-key = (symb prefix name)
+       for alias-keys = (symbol-prefix prefix aliases)
+       for abbrev-keys = (symbol-prefix (third prefix-value) abbreviations)
+       when t do
+         (table-check name-key alias-keys abbrev-keys)))
+  ;; Second pass to insert the values
+  (table-insert name aliases abbreviations def)
+  (loop for prefix being the hash-keys of *unit-prefix-table* using (hash-value prefix-value)
+     ;; Define the hash keys
+     for name-key = (symb prefix name)
+     for alias-keys = (symbol-prefix prefix aliases)
+     for abbrev-keys = (symbol-prefix (third prefix-value) abbreviations)
+     when t do
+       (table-insert name-key alias-keys abbrev-keys (if (zerop (second prefix-value)) def (list (expt (first prefix-value) (second prefix-value)) (list (make-uf (symbol-name name) 1)))))))
+(defmacro define-unit (name &key def alias abbrev prefix base overwrite)
+  `(define-unit% ',name :def (list ,@(parseq 'unit-definition def)) :aliases ',alias :abbreviations ',abbrev :prefixes ',prefix :base ',base :overwrite ,overwrite))
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
