@@ -6,10 +6,13 @@
 (export '*unit-prefix-table*)
 
 (defmacro define-unit-prefixes (&body prefix-declarations)
-  `(progn
-     ,@(loop for decl in prefix-declarations collect
-            (destructuring-bind (name abbr power &key (base 10)) decl
-              `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr)))))))
+  (let (names abbreviations)
+    `(progn
+       ,@(loop for decl in prefix-declarations collect
+              (destructuring-bind (name abbr power &key (base 10)) decl
+                (if (have name names) (warn "Prefix ~a already defined." name) (push name names))
+                (if (have abbr abbreviations) (warn "Prefix abbreviation ~a already defined." abbr) (push abbr abbreviations))
+                `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr))))))))
 (export 'define-unit-prefixes)
 
 ;; Unit database -------------------------------------------------------------------

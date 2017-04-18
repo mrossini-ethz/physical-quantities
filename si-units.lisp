@@ -18,7 +18,7 @@
     (mega meg 6)
     (giga g 9)
     (tera t 12)
-    (peta p 15)
+    (peta pet 15)
     (exa e 18)
     (zetta zet 21)
     (yotta yot 24)
