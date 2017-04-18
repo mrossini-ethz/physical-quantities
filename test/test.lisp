@@ -270,7 +270,66 @@
     ;; Logarithm qlog, number: quantity, base: quantity
     (q= (qlog #q(100 +/- 1) #q(10 +/- 0.1)) :value 2 :unit ())
     (condition= (qlog #q(100 +/- 1 m)  #q(10 +/- 0.1 m)) simple-error)
-))
+
+    ;; Trigonometric functions
+    ;; qsin
+    (= (qsin 2) (sin 2))
+    (q= (qsin #q(2 +/- 0.1)) :value (sin 2) :unit ())
+    (condition= (qsin #q(2 +/- 0.1 m)) simple-error)
+    ;; qcos
+    (= (qcos 2) (cos 2))
+    (q= (qcos #q(2 +/- 0.1)) :value (cos 2) :unit ())
+    (condition= (qcos #q(2 +/- 0.1 m)) simple-error)
+    ;; qtan
+    (= (qtan 2) (tan 2))
+    (q= (qtan #q(2 +/- 0.1)) :value (tan 2) :unit ())
+    (condition= (qtan #q(2 +/- 0.1 m)) simple-error)
+
+    ;; Inverse trigonometric functions
+    ;; qasin
+    (= (qasin 1/2) (asin 1/2))
+    (q= (qasin #q(1/2 +/- 0.1)) :value (asin 1/2) :unit ())
+    (condition= (qasin #q(1/2 +/- 0.1 m)) simple-error)
+    ;; qacos
+    (= (qacos 1/2) (acos 1/2))
+    (q= (qacos #q(1/2 +/- 0.1)) :value (acos 1/2) :unit ())
+    (condition= (qacos #q(1/2 +/- 0.1 m)) simple-error)
+    ;; qatan
+    (= (qatan 1/2) (atan 1/2))
+    (q= (qatan #q(1/2 +/- 0.1)) :value (atan 1/2) :unit ())
+    (condition= (qatan #q(1/2 +/- 0.1 m)) simple-error)
+
+    ;; Hyperbolic functions
+    ;; qsinh
+    (= (qsinh 2) (sinh 2))
+    (q= (qsinh #q(2 +/- 0.1)) :value (sinh 2) :unit ())
+    (condition= (qsinh #q(2 +/- 0.1 m)) simple-error)
+    ;; qcosh
+    (= (qcosh 2) (cosh 2))
+    (q= (qcosh #q(2 +/- 0.1)) :value (cosh 2) :unit ())
+    (condition= (qcosh #q(2 +/- 0.1 m)) simple-error)
+    ;; qtanh
+    (= (qtanh 2) (tanh 2))
+    (q= (qtanh #q(2 +/- 0.1)) :value (tanh 2) :unit ())
+    (condition= (qtanh #q(2 +/- 0.1 m)) simple-error)
+
+    ;; Inverse hyperbolic functions
+    ;; qasinh
+    (= (qasinh 1/2) (asinh 1/2))
+    (q= (qasinh #q(1/2 +/- 0.1)) :value (asinh 1/2) :unit ())
+    (condition= (qasinh #q(1/2 +/- 0.1 m)) simple-error)
+    ;; qacosh
+    (= (qacosh 1/2) (acosh 1/2))
+    (q= (qacosh #q(1/2 +/- 0.1)) :value (acosh 1/2) :unit ())
+    (condition= (qacosh #q(1/2 +/- 0.1 m)) simple-error)
+    ;; qatanh
+    (= (qatanh 1/2) (atanh 1/2))
+    (q= (qatanh #q(1/2 +/- 0.1)) :value (atanh 1/2) :unit ())
+    (condition= (qatanh #q(1/2 +/- 0.1 m)) simple-error)
+
+    ;; Absolute value
+    (= (qabs -3) 3)
+    (q= (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((m 1)))))
 
 (define-test physical-quantities-test ()
   (check

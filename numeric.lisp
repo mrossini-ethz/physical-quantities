@@ -248,7 +248,7 @@
 (defmethod qsin ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (sin val) :error (abs (* (cos val) err)))))
-(defmethod qsin ((number number))
+(defmethod qsin ((number real))
   (sin number))
 (export 'qsin)
 
@@ -256,7 +256,7 @@
 (defmethod qcos ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (cos val) :error (abs (* (sin val) err)))))
-(defmethod qcos ((number number))
+(defmethod qcos ((number real))
   (cos number))
 (export 'qcos)
 
@@ -264,7 +264,7 @@
 (defmethod qtan ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (tan val) :error (abs (/ err (expt (cos val) 2))))))
-(defmethod qtan ((number number))
+(defmethod qtan ((number real))
   (tan number))
 (export 'qtan)
 
@@ -272,7 +272,7 @@
 (defmethod qasin ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (asin val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
-(defmethod qasin ((number number))
+(defmethod qasin ((number real))
   (asin number))
 (export 'qasin)
 
@@ -280,7 +280,7 @@
 (defmethod qacos ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (acos val) :error (abs (/ err (sqrt (- 1 (expt val 2))))))))
-(defmethod qacos ((number number))
+(defmethod qacos ((number real))
   (acos number))
 (export 'qacos)
 
@@ -288,7 +288,7 @@
 (defmethod qatan ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (atan val) :error (abs (/ err (+ 1 (expt val 2)))))))
-(defmethod qatan ((number number))
+(defmethod qatan ((number real))
   (atan number))
 (export 'qatan)
 
@@ -296,7 +296,7 @@
 (defmethod qsinh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (sinh val) :error (abs (* (cosh val) err)))))
-(defmethod qsinh ((number number))
+(defmethod qsinh ((number real))
   (sinh number))
 (export 'qsinh)
 
@@ -304,7 +304,7 @@
 (defmethod qcosh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (cosh val) :error (abs (* (sinh val) err)))))
-(defmethod qcosh ((number number))
+(defmethod qcosh ((number real))
   (cosh number))
 (export 'qcosh)
 
@@ -312,7 +312,7 @@
 (defmethod qtanh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (tanh val) :error (abs (* (- 1 (expt (tanh val) 2)) err)))))
-(defmethod qtanh ((number number))
+(defmethod qtanh ((number real))
   (tanh number))
 (export 'qtanh)
 
@@ -320,7 +320,7 @@
 (defmethod qasinh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (asinh val) :error (abs (/ err (sqrt (+ (expt val 2) 1)))))))
-(defmethod qasinh ((number number))
+(defmethod qasinh ((number real))
   (asinh number))
 (export 'qasinh)
 
@@ -328,7 +328,7 @@
 (defmethod qacosh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (acosh val) :error (abs (/ err (sqrt (- (expt val 2) 1)))))))
-(defmethod qacosh ((number number))
+(defmethod qacosh ((number real))
   (acosh number))
 (export 'qacosh)
 
@@ -336,14 +336,14 @@
 (defmethod qatanh ((number quantity))
   (with-unitless-quantity (val err number :error :absolute)
     (make-quantity% :value (atanh val) :error (abs (/ err (- 1 (expt val 2)))))))
-(defmethod qatanh ((number number))
+(defmethod qatanh ((number real))
   (atanh number))
 (export 'qatanh)
 
 (defgeneric qabs (number))
 (defmethod qabs ((number quantity))
   (dup-quantity number :v (abs (value number))))
-(defmethod qabs ((number number))
+(defmethod qabs ((number real))
   (abs number))
 (export 'qabs)
 
