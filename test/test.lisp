@@ -1,8 +1,9 @@
 (in-package :pq)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (define-si-units)
   (define-read-macro))
+
+(define-si-units)
 
 (defun q= (quantity &key (value 0 value-supplied-p) (error 0 error-supplied-p) (unit () unit-supplied-p))
   (and (or (not value-supplied-p) (= (value quantity) value))
