@@ -26,6 +26,8 @@
     ;; Aliases
     (q= #q(1 metre) :value 1 :error 0 :unit '((m 1)))
     (q= #q(1 meter) :value 1 :error 0 :unit '((m 1)))
+    ;; Unknown units
+    (condition= #q(1 foo) simple-error)
     ;; Value and multiple unit factors
     (q= #q(1 m / s ^ 2) :value 1 :error 0 :unit '((m 1) (s -2)))
     (q= #q(1 km / h) :value 1 :error 0 :unit '((km 1) (h -1)))
@@ -331,8 +333,31 @@
     (= (qabs -3) 3)
     (q= (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((m 1)))))
 
+(define-test interface-test ()
+  (check
+    ;; make-quantity
+    (q= (make-quantity) :value 0 :error 0 :unit ())
+    (q= (make-quantity :value 1) :value 1 :error 0 :unit ())
+    (q= (make-quantity :error 1) :value 0 :error 1 :unit ())
+    (q= (make-quantity :error 1 :error-type :relative) :value 0 :error -1 :unit ())
+    (q= (make-quantity :value 2 :error 0.2 :unit '((m 1) (s -2))) :value 2 :error 0.2 :unit '((m 1) (s -2)))
+    (condition= (make-quantity :value #C(1 1)) simple-error)
+    (condition= (make-quantity :error -1) simple-error)
+    (condition= (make-quantity :error-type :pq) simple-error)
+
+    ;; make-unit
+    (q= (make-quantity :value 2 :error 0.2 :unit (make-unit '(m 1) '(s -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
+    (q= (make-quantity :value 2 :error 0.2 :unit (make-unit '("M" 1) '("S" -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
+    (condition= (make-unit '(m 1 2)) simple-error)
+
+    ;; convert-unit
+    (q= (convert-unit #q(10 +/- 1/10 m / s) '((km 1) (h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
+    (q= (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(km 1) '(h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
+    (condition= (convert-unit 10  '((km 1) (h -1))) simple-error)))
+
 (define-test physical-quantities-test ()
   (check
     (definition-test)
     (conversion-test)
-    (operations-test)))
+    (operations-test)
+    (interface-test)))
