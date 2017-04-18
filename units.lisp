@@ -91,6 +91,14 @@
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
 
+(defun has-unit-p (quantity)
+  "Checks whether the given quantity has a unit."
+  (consp (expand-unit (unit quantity))))
+
+(defun unitlessp (quantity)
+  "Checks whether the given quantity is unitless."
+  (not (has-unit-p quantity)))
+
 ;; Unit expansion ------------------------------------------------------------------
 
 (defun collect-factors (f &rest expanded-unit-factors)

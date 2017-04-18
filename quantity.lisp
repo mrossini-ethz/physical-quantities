@@ -39,6 +39,14 @@
 (setf (fdefinition '(setf rerr)) #'(setf relative-error))
 (export '(absolute-error relative-error aerr rerr))
 
+(defun has-error-p (quantity)
+  "Checks whether a quantity has uncertainty/error."
+  (not (zerop (error-direct quantity))))
+
+(defun errorlessp (quantity)
+  "Checks whether a quantity is without uncertainty/error."
+  (not (has-error-p quantity)))
+
 ;; Internal function to make quantities
 (defun make-quantity% (&key (value 0) (error 0) (unit nil))
   (make-instance 'quantity :value value :error error :unit unit))
