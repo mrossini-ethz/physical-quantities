@@ -58,6 +58,16 @@
 
 (define-test operations-test ()
   (check
+    ;; Addition, no args
+    (= (q+) 0)
+    ;; Addition, unitless
+    (= (q+ 2 -3) -1)
+    ;; Addition, a: quantity, b: real
+    (q= (q+ #q(2) -3) :value -1)
+    (condition= (q+ #q(2 m) -3) simple-error)
+    ;; Addition, a: real, b: quantity
+    (q= (q+ 2 #q(-3)) :value -1)
+    (condition= (q+ 2 #q(-3 m)) simple-error)
     ;; Addition, exactly same units
     (q= (q+ #q(1 m) #q(2 m)) :value 3 :error 0 :unit '((m 1)))
     ;; Addition, same units, different prefixes
@@ -66,6 +76,11 @@
     ;; Addition, different units
     (condition= (q+ #q(1 m) #q(2 s)) simple-error)
 
+    ;; Subtraction, one arg
+    (= (q- 3) -3)
+    (q= (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((m 1)))
+    ;; Subtraction, real numbers
+    (= (q- 2 -3) 5)
     ;; Subtraction, exactly same units
     (q= (q- #q(1 m) #q(2 m)) :value -1 :error 0 :unit '((m 1)))
     ;; Subtraction, same units, different prefixes
@@ -74,6 +89,14 @@
     ;; Subtraction, different units
     (condition= (q- #q(1 m) #q(2 s)) simple-error)
 
+    ;; Multiplication, no args
+    (= (q*) 1)
+    ;; Multiplication, a: real, b: real
+    (= (q* 2 -3) -6)
+    ;; Multiplication, a: real, b: quantity
+    (q= (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 1/5 :unit '((m 1)))
+    ;; Multiplication, a: quantity, b: real
+    (q= (q* #q(2 +/- 1/10 m) -3) :value -6 :error 3/10 :unit '((m 1)))
     ;; Multiplication with unitless number
     (q= (q* #q(1 m) 2) :value 2 :error 0 :unit '((m 1)))
     (q= (q* 2 #q(1 m)) :value 2 :error 0 :unit '((m 1)))
@@ -87,9 +110,17 @@
     ;; Multiplication, different units
     (q= (q* #q(1 kg m / s ^ 2) #q(2 m / s)) :value 2 :error 0 :unit '((kg 1) (m 2) (s -3)))
 
-    ;; Division with unitless number
-    (q= (q/ #q(1 m) 2) :value 1/2 :error 0 :unit '((m 1)))
-    (q= (q/ 2 #q(1 m)) :value 2 :error 0 :unit '((m -1)))
+    ;; Division, one arg
+    (= (q/ -2) -1/2)
+    (q= (q/ #q(-2 m / s ^ 2)) :value -1/2 :error 0 :unit '((s 2) (m -1)))
+    ;; Division, a: real, b: real
+    (= (q/ 2 -3) -2/3)
+    ;; Division, a: quantity, b: real
+    (q= (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 1/10 :unit '((m 1)))
+    (q= (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error -1/10 :unit '((m 1)))
+    ;; Division, a: real, b: quantity
+    (q= (q/ 2 #q(1 +/- 1/10 m)) :value 2 :unit '((m -1)))
+    (q= (q/ 2 #q(1 +/- 10 % m)) :value 2 :error -1/10 :unit '((m -1)))
     ;; Division, exactly same units
     (q= (q/ #q(1 m) #q(1 m)) :value 1 :error 0 :unit '())
     ;; Division, same units, different prefixes
