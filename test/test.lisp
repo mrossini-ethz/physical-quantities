@@ -40,7 +40,7 @@
     (q= #q(1 +/- 0.1 kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error 0.1 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
     (q= #q(1 +/- 10 % kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
     ;; Full syntax, mixed symbol options
-    (q= #q(1 +- 10 % kg m ** 2 / s to the 2 / k / mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))))
+    (q= #q(1 +- 10 % kg m ** 2 / s to the 2 / k per mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))))
 
 (define-test conversion-test ()
   (check

@@ -7,7 +7,7 @@
   (:destructure (pm val percent) (declare (ignore pm)) (if percent `(- (/ ,val 100)) val)))
 (defrule errval () (and value (? error))
   (:destructure (val err) (list val (if err err 0))))
-(defrule conversion () (and '-> (* unit-factor))
+(defrule conversion () (and '-> (+ unit-factor))
   (:destructure (arrow unit-factors) (declare (ignore arrow)) unit-factors))
 (defrule quantity () (and errval (* unit-factor) (? conversion)))
 (defrule unit-definition () (and form (* unit-factor))
