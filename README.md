@@ -71,6 +71,8 @@ kilogram metre ^ 2 / second ^ 2 / kelvin / mol
 Please note that separating symbols with spaces is compulsory.
 
 ### Unit abbreviations
+Units can be abbreviated. This means that `kilometre` is interpreted in the same way as `km`. Note that both the unit `metre` and the prefix `kilo` is abbreviated. Mixing abbreviation (e.g. `kmetre` or `kilom`) is forbidden.
+
 While unit abbreviations are allowed, their use is somewhat dangerous. Mostly, the problem is that lisp does not distinguish between lower- and uppercase letters when reading symbols, converting everything to uppercase. This leads to name conflicts and/or confusion:
 
 * Is `MM` millimetre or megametre?
@@ -143,38 +145,60 @@ Units can be converted using the `(convert-unit ...)` function. It accepts eithe
 ```
 
 ## Defining new units
-New units can be defined using the `(define-units ...)` macro. Each enclosed form defines a new unit:
+New units can be defined using the `(define-unit ...)` macro:
 ```
-(define-units
-  (metre :abbrev m :alias meter :prefix-max 3)
-  (watthour :def (1 watt hour) :abbrev wh)
-  (mile :def (1609344/1000 metre) :abbrev mi)
-  (gravity :def (981/100 metre / second ^ 2 :abbrev g))
+(define-unit metre :abbrev m :alias meter)
+(define-unit watthour :def (1 watt hour) :abbrev wh)
+(define-unit mile :def (1609344/1000 metre) :abbrev mi)
+(define-unit gravity :def (981/100 metre / second ^ 2) :abbrev g)
 ```
-Note that there may be naming conflicts. For all defined units and abbreviations more units with all prefixes will be automatically defined such as `KILOWATTHOUR` or `KWH`. Especially for abbreviations, this may cause conflicts. It is possible to limit the number of admissible/automatic prefixes (see below).
+For all defined units and abbreviations, more units with all permissible prefixes  such as `KILOWATTHOUR` or `KWH` will automatically be defined.
+This may cause naming conflicts which will raise an error.
+It is possible to define which prefixes are admissible (see below).
 
 There are a number of keywords that may appear in the definition:
 
 * `:def` Specifies the unit in terms of another unit. Complex dependencies can be given such as (0.3048 metre / second ^ 2). If this keyword is missing, the newly defined unit will be considered a base unit.
-* `:alias` Allows multiple (non-abbreviated) names for a unit. This is helpful if there are different spellings (e.g. meter, metre).
-* `:abbrev` An abbreviation for the unit can be specified here. Be careful about name conflicts (see above).
-* `:prefix-max` Specifies the largest admissible prefix. This is useful if some prefixes are never used for a unit (e.g. megametre) or to avoid name conflicts.
-* `:prefix-min` Specifies the smallest admissible prefix. This is useful if some prefixes are never used for a unit (e.g. millimile) or to avoid name conflicts.
-* `:base` Specifies the admissible bases for the unit prefixes and defaults to 10. Example where a different basis is used: kibibyte = 1024 bytes. Therefore the unit `byte` allows both base 10 and base 1024.
+* `:alias` Allows multiple (non-abbreviated) names for a unit, given as a single symbol or a list of symbols. This is helpful if there are different spellings (e.g. meter, metre).
+* `:abbrev` Abbreviations for the unit can be specified here, given as a single symbol or a list of symbols. Be careful about name conflicts (see above).
+* `:prefix-test` A function of two arguments, the base and the power, which decides whether a unit prefix is admissible for use with this unit. For more details, see below.
+* `:overwrite` A flag which will suppress errors that occur when a naming conflict is detected.
+
+### Specifying admissible prefixes
+For some units, certain prefixes do not make sense. For example: For the unit `TONNE`, the prefix `KILO` is widely used (`KILOTONNE`). It makes little sense, however, to use `MILLITONNE`. To specify, which prefixes are admissible, the keyword parameter `:prefix-test` can be used in the call to `define-unit`. It accepts a function of two arguments, the base and the power of a prefix. The function can then decide, whether such a prefix is admissible by returning `T` or `NIL`. Here is an example:
+```
+(define-unit tonne :def (1000 kilogram) :prefix-test (lambda (base power) (and (= base 10) (>= power 3))))
+```
+This will only allow the units `TONNE`, `KILOTONNE`, `MEGATONNE`, etc.
+
+To facilitate the prefix test specification, some functions are provided:
+
+* `(prefix-base base &optional mod)` Will return a function that accepts only the given base and powers divisible by `mod` (defaulting to 1).
+* `(prefix-range base from to)` Will return a function that accepts only the given base and powers in the range between `from` and `to` (inclusive). To leave the range open on either side, `NIL` can be supplied.
+* `(prefix-list base &rest powers)` Will return a function that accepts only the given base and the given powers.
+
+To combine such tests, the following composing functions are provided:
+
+* `(prefix-and &rest functions)` This will require all functions to accept the prefix.
+* `(prefix-or &rest functions)` This will accept a prefix if a single function accepts it.
+
+You can use the standard composing function `complement` where necessary. The above example could be rewritten to read
+```
+(define-unit tonne :def (1000 kilogram) :prefix-test (prefix-range 10 3 nil))
+```
 
 ## Defining prefixes
-Prefixes can be defined using the `(define-unit-prefixes ...)` macro:
+Prefixes can be defined by using the `(define-unit-prefix ...)` macro:
 ```
-(define-unit-prefixes
-  (giga g 9)
-  (tera t 12)
-  (gibi gi 3 :base 1024)
-  (tibi ti 4 :base 1024))
+(define-unit-prefix giga 9 :abbrev g)
+(define-unit-prefix gibi 3 :abbrev gi :base 1024)
 ```
-The full name is specified first, followed by an abbreviation and the power. The default base for the power is 10. In this example, `giga` is equivalent to 10^9.
+The full name is specified first, followed by the power. Keyword parameters allow the definition of the base (defaults to 10) and abbreviation. In this example, `giga` is equivalent to 10^9 and `gibi` to 1024^3.
+
+You must define prefixes before defining units.
 
 ## Standard units and prefixes
-When calling the function `(define-si-units)`, the SI units will be automatically defined. More sets may be available in the future.
+When calling the function `(define-si-units &optional clear-existing-units)`, the SI units will be automatically defined. More sets may be available in the future. Note that the unit prefix abbreviation for `mega` is `meg` because it would otherwise conflict with `milli`.
 
 ## License
 
