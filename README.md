@@ -99,6 +99,13 @@ or even a quantity definition
 ```
 Note that it is an error if the units are not convertible.
 
+### Limitations
+The unit conversion only considers the conversion factor. This means that linear conversions with offset (not to speak of nonlinear conversions) may not work as expected. For example
+```
+#q(1 celsius -> kelvin)
+```
+will produce 1 kelvin. The offset of 273.15 is ignored. This is fine for conversion of temperature differences, but not for absolute temperatures.
+
 ## Accessing value, error and unit
 To retrieve value/magnitude, uncertainty/error and unit of an object of type `quantity`, one can use the functions
 
