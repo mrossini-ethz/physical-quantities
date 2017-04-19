@@ -56,6 +56,9 @@
     ;; Derived units
     (q= #q(1 kg m / s ^ 2 -> newton) :value 1 :error 0 :unit '((n 1)))
     (q= #q(1 newton -> kg m / s ^ 2) :value 1 :error 0 :unit '((kg 1) (m 1) (s -2)))
+    ;; Special cases
+    (q= #q(1 kelvin -> celsius) :value 1 :error 0 :unit '((celsius 1)))
+    (q= #q(1 rad -> deg) :value (/ 180 pi) :error 0 :unit '((degree 1)))
     ;; Incompatible units
     (condition= #q(1 m -> s) simple-error)))
 
