@@ -15,6 +15,30 @@
                 `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr))))))))
 (export 'define-unit-prefixes)
 
+;; Unit prefix composition functions -----------------------------------------------
+
+(defun prefix-and (&rest functions)
+  (lambda (base power)
+    (loop for f in functions always (funcall f base power))))
+
+(defun prefix-or (&rest functions)
+  (lambda (base power)
+    (loop for f in functions thereis (funcall f base power))))
+
+(defun prefix-range (base power-min power-max)
+  (lambda (b p)
+    (and (= b base) (or (not power-min) (>= p power-min)) (or (not power-max) (<= p power-max)))))
+
+(defun prefix-list (base &rest powers)
+  (lambda (b p)
+    (and (= b base) (have p powers))))
+
+(defun prefix-base (base &optional mod)
+  (lambda (b p)
+    (and (= b base) (or (not mod) (zerop (rem p mod))))))
+
+;; FIXME: create a macro that defines a language for defining prefixes validation functions
+
 ;; Unit database -------------------------------------------------------------------
 
 (defparameter *unit-translation-table* (make-hash-table :test 'equal))
@@ -59,7 +83,9 @@
 (defun symbol-prefix (prefix symbols)
   (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
 
-(defun define-unit% (name &key def aliases abbreviations prefixes base overwrite)
+(defun define-unit% (name &key def aliases abbreviations prefix-test overwrite)
+  "Defines a new unit with the identifier name. A list of aliases and a list of abbreviations are permitted which - when encountered - are internally converted to the primary identifier. The definition allows the unit to be defined in terms of other units, e.g :def (1.602 kilometre). Prefixes is must be a function of two parameters, the base and the power, with which it decides whether a prefix is allowed for the unit. It defaults to allowing all defined prefixes."
+  ;; FIXME: the prefix test needs to be stored to allow new prefixes to be defined after defining the unit.
   ;; First pass to check for conflicts
   (unless overwrite
     ;; Check principal entry
@@ -70,7 +96,7 @@
        for name-key = (symb prefix name)
        for alias-keys = (symbol-prefix prefix aliases)
        for abbrev-keys = (symbol-prefix (third prefix-value) abbreviations)
-       when t do
+       when (or (not prefix-test) (funcall prefix-test (first prefix-value) (second prefix-value))) do
          (table-check name-key alias-keys abbrev-keys)))
   ;; Second pass to insert the values
   (table-insert name aliases abbreviations def)
@@ -79,10 +105,10 @@
      for name-key = (symb prefix name)
      for alias-keys = (symbol-prefix prefix aliases)
      for abbrev-keys = (symbol-prefix (third prefix-value) abbreviations)
-     when t do
+     when (or (not prefix-test) (funcall prefix-test (first prefix-value) (second prefix-value))) do
        (table-insert name-key alias-keys abbrev-keys (if (zerop (second prefix-value)) def (list (expt (first prefix-value) (second prefix-value)) (list (make-uf (symbol-name name) 1)))))))
-(defmacro define-unit (name &key def alias abbrev prefix base overwrite)
-  `(define-unit% ',name :def (list ,@(parseq 'unit-definition def)) :aliases ',alias :abbreviations ',abbrev :prefixes ',prefix :base ',base :overwrite ,overwrite))
+(defmacro define-unit (name &key def alias abbrev prefix-test overwrite)
+  `(define-unit% ',name :def (list ,@(parseq 'unit-definition def)) :aliases ',alias :abbreviations ',abbrev :prefix-test ,prefix-test :overwrite ,overwrite))
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
