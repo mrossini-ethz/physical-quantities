@@ -39,6 +39,9 @@
 (setf (fdefinition '(setf rerr)) #'(setf relative-error))
 (export '(absolute-error relative-error aerr rerr))
 
+(defun quantityp (object)
+  (eql (type-of object) 'quantity))
+
 (defun has-error-p (quantity)
   "Checks whether a quantity has uncertainty/error."
   (not (zerop (error-direct quantity))))

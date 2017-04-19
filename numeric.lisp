@@ -31,9 +31,6 @@
 
 ;; Wrapper functions -----------------------------------------------------------------
 
-(defun quantityp (object)
-  (eql (type-of object) 'quantity))
-
 (defun copy-quantity (q)
   `(dup-quantity ,q))
 
