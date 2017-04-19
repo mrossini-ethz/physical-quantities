@@ -69,7 +69,7 @@
   (define-unit day :def (24 hour) :abbrev d :prefix-test (constantly nil))
   (define-unit degree :def (1) :abbrev deg :prefix-test (prefix-range 10 nil -3))
   (define-unit hectare :def (10000 metre ^ 2) :abbrev ha :prefix-test (constantly nil))
-  (define-unit litre :def (1 decimetre ^ 3) :abbrev l :prefix-test (prefix-range 10 nil 2))
+  (define-unit litre :def (1 decimetre ^ 3) :alias liter :abbrev l :prefix-test (prefix-range 10 nil 2))
   (define-unit tonne :def (1000 kilogram) :prefix-test (prefix-range 10 3 nil))
   (define-unit au :def (149597870700 metre) :prefix-test (constantly nil))
   (define-unit electron :def (1.6021765314d-19 coulomb) :prefix-test (prefix-range 10 3 nil))
