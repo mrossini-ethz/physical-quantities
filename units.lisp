@@ -5,15 +5,32 @@
 (defparameter *unit-prefix-table* (make-hash-table :test 'equal))
 (export '*unit-prefix-table*)
 
-(defmacro define-unit-prefixes (&body prefix-declarations)
-  (let (names abbreviations)
-    `(progn
-       ,@(loop for decl in prefix-declarations collect
-              (destructuring-bind (name abbr power &key (base 10)) decl
-                (if (have name names) (warn "Prefix ~a already defined." name) (push name names))
-                (if (have abbr abbreviations) (warn "Prefix abbreviation ~a already defined." abbr) (push abbr abbreviations))
-                `(setf (gethash ,(symbol-name name) *unit-prefix-table*) (list ,base ,power ,(symbol-name abbr))))))))
-(export 'define-unit-prefixes)
+(defun define-unit-prefix% (name power &key abbrev (base 10))
+  "Defines a unit prefix such as kilo in kilometre. Apart from the name the power is required (3 for kilo) together with the base that defaults to 10. An abbreviation for the prefix is also allowed which will be used in combination with abbreviated units."
+  ;; Check inputs
+  (unless (symbolp name)
+    (error "Unit prefix must be a symbol."))
+  (unless (symbolp abbrev)
+    (error "Unit prefix abbreviation must be a symbol."))
+  (unless (and (integerp base) (plusp base))
+    (error "Unit prefix base must be an integer greater than zero."))
+  (unless (and (integerp power) (not (zerop power)))
+    (error "Unit prefix power must be an integer different from zero."))
+  (let ((name-str (symbol-name name)) (abbrev-str (if abbrev (symbol-name abbrev))))
+    ;; Check for name conflicts. Names and abbreviations can be treated separately.
+    (when (has-key name-str *unit-prefix-table*)
+      (error "Unit prefix ~a is already defined." name-str))
+    (when abbrev-str
+      (loop for v being the hash-values of *unit-prefix-table* when (string= abbrev-str (third v)) do
+           (error "Unit prefix ~a is already defined." abbrev-str)))
+    ;; Add the prefixes to the hash table
+    (setf (gethash name-str *unit-prefix-table*) (list base power abbrev-str))
+    ;; FIXME: add prefixes to existing units
+    ))
+
+(defmacro define-unit-prefix (name power &key abbrev (base 10))
+  `(define-unit-prefix% ',name ,power :abbrev ',abbrev :base ,base))
+(export 'define-unit-prefix)
 
 ;; Unit prefix composition functions -----------------------------------------------
 
@@ -107,8 +124,10 @@
      for abbrev-keys = (symbol-prefix (third prefix-value) abbreviations)
      when (or (not prefix-test) (funcall prefix-test (first prefix-value) (second prefix-value))) do
        (table-insert name-key alias-keys abbrev-keys (if (zerop (second prefix-value)) def (list (expt (first prefix-value) (second prefix-value)) (list (make-uf (symbol-name name) 1)))))))
+
 (defmacro define-unit (name &key def alias abbrev prefix-test overwrite)
   `(define-unit% ',name :def (list ,@(parseq 'unit-definition def)) :aliases ',alias :abbreviations ',abbrev :prefix-test ,prefix-test :overwrite ,overwrite))
+(export 'define-unit)
 
 (defun lookup-unit (unit)
   ;; Search the translation table directly
