@@ -34,6 +34,9 @@
   ;; Checks whether the given item is in the list
   (some #'(lambda (x) (funcall test item (funcall key x))) sequence))
 
+(defun has-key (key hash-table)
+  (second (multiple-value-list (gethash key hash-table))))
+
 (defun split (test sequence &key (key #'identity))
   (loop for item in sequence for result = (funcall test (funcall key item)) when result collect item into a else collect item into b finally (return (list a b))))
 

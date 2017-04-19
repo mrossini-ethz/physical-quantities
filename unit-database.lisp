@@ -79,9 +79,6 @@
   (loop for abbrev in (mklist abbrevs) do
        (setf (gethash (symbol-name abbrev) *unit-abbreviation-table*) (symbol-name name))))
 
-(defun has-key (key hash-table)
-  (second (multiple-value-list (gethash key hash-table))))
-
 (defun unit-hash-key-check (key)
   (or (has-key (symbol-name key) *unit-translation-table*)
       (has-key (symbol-name key) *unit-alias-table*)
