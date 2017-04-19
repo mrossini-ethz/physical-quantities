@@ -70,6 +70,17 @@ kilogram metre ^ 2 / second ^ 2 / kelvin / mol
 ```
 Please note that separating symbols with spaces is compulsory.
 
+### Unit abbreviations
+While unit abbreviations are allowed, their use is somewhat dangerous. Mostly, the problem is that lisp does not distinguish between lower- and uppercase letters when reading symbols, converting everything to uppercase. This leads to name conflicts and/or confusion:
+
+* Is `MM` millimetre or megametre?
+* Is 'EV' electronvolt or exavolt?
+* Is 'PA' pascal or picoampere?
+
+If you want to make sure that your probe does not crash on mars, it is better to avoid using abbreviations.
+
+The problem can be avoided by defining units and prefixes using the `|...|` syntax, e.g. `|Pa|`. One would have to use this syntax throughout the code using the units, however.
+
 ## Operations
 Common Lisp does not allow the redefinition of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `number` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
 ```
