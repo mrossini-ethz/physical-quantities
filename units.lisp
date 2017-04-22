@@ -140,3 +140,4 @@
                (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf))))))
       ;; List of unit factors is empty, therefore unit 1
       "1"))
+(export 'print-unit)

@@ -41,6 +41,7 @@
 
 (defun quantityp (object)
   (eql (type-of object) 'quantity))
+(export 'quantityp)
 
 (defun has-error-p (quantity)
   "Checks whether a quantity has uncertainty/error."

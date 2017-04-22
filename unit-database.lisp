@@ -3,7 +3,6 @@
 ;; Unit prefix database ------------------------------------------------------------
 
 (defparameter *unit-prefix-table* (make-hash-table :test 'equal))
-(export '*unit-prefix-table*)
 
 (defun define-unit-prefix% (name power &key abbrev (base 10))
   "Defines a unit prefix such as kilo in kilometre. Apart from the name the power is required (3 for kilo) together with the base that defaults to 10. An abbreviation for the prefix is also allowed which will be used in combination with abbreviated units."
@@ -61,7 +60,6 @@
 (defparameter *unit-translation-table* (make-hash-table :test 'equal))
 (defparameter *unit-alias-table* (make-hash-table :test 'equal))
 (defparameter *unit-abbreviation-table* (make-hash-table :test 'equal))
-(export '(*unit-translation-table* *unit-alias-table* *unit-abbreviation-table*))
 
 (defun clear-units ()
   (setf *unit-prefix-table* (make-hash-table :test 'equal))
