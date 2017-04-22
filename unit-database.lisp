@@ -142,3 +142,25 @@
 (defmacro with-unit-lookup ((base-unit translation unit) &body body)
   `(multiple-value-bind (,base-unit ,translation) (lookup-unit ,unit)
      ,@body))
+
+;; Namespace macros -----------------------------------------------------------
+
+(defmacro with-local-units (&body body)
+  "Shadow the global unit table with a new rule table."
+  `(let ((*unit-translation-table* (make-hash-table :test 'equal))
+         (*unit-alias-table* (make-hash-table :test 'equal))
+         (*unit-abbreviation-table* (make-hash-table :test 'equal))
+         (*unit-prefix-table* (make-hash-table :test 'equal)))
+     ;; Execute the body
+     ,@body))
+(export 'with-local-units)
+
+(defmacro with-saved-units (&body body)
+  "Shadow the global unit table with a copy of the unit table. When returninng from the body the original units are restored."
+  `(let ((*unit-translation-table* (copy-hash-table *unit-translation-table*))
+         (*unit-alias-table* (copy-hash-table *unit-alias-table*))
+         (*unit-abbreviation-table* (copy-hash-table *unit-abbreviation-table*))
+         (*unit-prefix-table* (copy-hash-table *unit-prefix-table*)))
+     ;; Execute the body
+     ,@body))
+(export 'with-saved-units)

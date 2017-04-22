@@ -359,9 +359,25 @@
     (q= (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(km 1) '(h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
     (condition= (convert-unit 10  '((km 1) (h -1))) simple-error)))
 
+(define-test namespace-test ()
+  (check
+    (with-local-units
+      (condition= #q(1 km) simple-error))
+    (with-saved-units
+      (q= #q(1 km) :value 1 :error 0 :unit '((kilometre 1))))
+    (with-saved-units
+      (define-unit foo :abbrev fo)
+      (q/ #q(1 foo) #q(1 second)))
+    (condition= #q((with-saved-units
+                     (define-unit foo :abbrev fo)
+                     (q/ #q(1 foo) #q(1 second)))
+                   -> metre)
+                simple-error)))
+
 (define-test physical-quantities-test ()
   (check
     (definition-test)
     (conversion-test)
     (operations-test)
-    (interface-test)))
+    (interface-test)
+    (namespace-test)))

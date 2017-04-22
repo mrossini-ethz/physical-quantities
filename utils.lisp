@@ -50,3 +50,10 @@
 (defmacro with-gensyms ((&rest names) &body body)
   `(let ,(loop for n in names collect `(,n (gensym (concatenate 'string (symbol-name ',n) "-"))))
      ,@body))
+
+(defun copy-hash-table (hash-table)
+  "Creates a copy of the given hash table."
+  (loop for k being the hash-keys in hash-table using (hash-value v)
+     with ht = (make-hash-table :test (hash-table-test hash-table))
+     do (setf (gethash k ht) v)
+     finally (return ht)))
