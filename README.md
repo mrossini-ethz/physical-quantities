@@ -200,6 +200,11 @@ You must define prefixes before defining the units that use them.
 ## Standard units and prefixes
 When calling the function `(define-si-units &optional clear-existing-units)`, the SI units will be automatically defined. More sets may be available in the future. Note that the unit prefix abbreviation for `mega` is `meg` because it would otherwise conflict with `milli`.
 
+## Local namespaces
+Several unit and prefix definitions can be used in a program by locally defining them. This can be done with the `(with-local-units ...)` and `(with-saved-units ...`) macros. The former completely clears the outside units and prefixes until control leaves the form. The latter makes a copy of all the unit definitions such that they can be changed within the body of the form without affecting the outisde definitions.
+
+Please note that the unit definitions use dynamic scope an not lexical scope. This means that the unit definitions are only local during the time spent within the macro call. It is therefore not possible to close over the unit definitions. While quantities with local unit can be returned from this macro call, the unit may be undefined after the time of the call or may have a different meaning.
+
 ## License
 
 Physical Quantities: Lisp Library
