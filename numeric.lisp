@@ -361,6 +361,185 @@
   (funcall #'q-op-insert qform))
 (export 'qop)
 
+;; Predicates/Tests -----------------------------------------------------------------
+
+(defgeneric qequal (x y) (:documentation "Determines whether two quantities are equal in value, error and unit."))
+(defmethod qequal ((x real) (y real))
+  (equal x y))
+(defmethod qequal ((x quantity) (y real))
+  (and (errorlessp x) (unitlessp x) (equal (value x) y)))
+(defmethod qequal ((x real) (y quantity))
+  (and (errorlessp y) (unitlessp y) (equal x (value y))))
+(defmethod qequal ((x quantity) (y quantity))
+  (and (equal (value x) (value y)) (equal (error-direct x) (error-direct y)) (units-equal (unit x) (unit y))))
+(export 'qequal)
+
+(defgeneric qequalp (x y) (:documentation "Determines whether two quantities are equalp in value, error and unit."))
+(defmethod qequalp ((x real) (y real))
+  (equalp x y))
+(defmethod qequalp ((x quantity) (y real))
+  (and (errorlessp x) (unitlessp x) (equalp (value x) y)))
+(defmethod qequalp ((x real) (y quantity))
+  (qequalp y x))
+(defmethod qequalp ((x quantity) (y quantity))
+  (and (equalp (value x) (value y))
+       (or (equalp (error-direct x) (error-direct y))
+           (equalp (aerr x) (aerr y))
+           (equalp (rerr x) (rerr y)))
+       (units-equalp (unit x) (unit y))))
+(export 'qequalp)
+
+(defgeneric q= (x y &optional p-value) (:documentation "Determines whether the value of two quantities are equal."))
+(defmethod q= ((x real) (y real) &optional p-value)
+  (declare (ignore p-value))
+  (= x y))
+(defmethod q= ((x quantity) (y real) &optional (p-value 95/100))
+  (unless (unitlessp x)
+    (error "Cannot compare quantity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp x)
+      ;; Quantity has no uncertainty
+      (= (value x) y)
+      ;; Quantity has uncertainty
+      (let* ((max-delta (* (aerr x) (confidence-interval p-value :two-sided t))) (delta (abs (- (value x) y))))
+        ;; delta: the difference between the two values
+        ;; max-delta: the range within which delta is acceptable
+        (< delta max-delta))))
+(defmethod q= ((x real) (y quantity) &optional (p-value 95/100))
+  (q= y x p-value))
+(defmethod q= ((x quantity) (y quantity) &optional (p-value 95/100))
+  ;; Calculate the difference between the quantities. This may raise an error.
+  (unless (units-convertible (unit x) (unit y))
+    (error "Cannot compare quantities that are not convertible in units."))
+  (let ((val (q- y x)))
+    (if (errorlessp val)
+        ;; Difference has no uncertainty
+        (= (value val) 0)
+        ;; Difference has uncertainty
+        (let ((confidence-interval (* (aerr val) (confidence-interval p-value :two-sided t))))
+          (< (abs (value val)) confidence-interval)))))
+(export 'q=)
+
+(defun q/= (x y &optional (p-value 0.95))
+  (not (q= x y p-value)))
+(export 'q/=)
+
+(defgeneric q< (x y &optional p-value) (:documentation "Determines whether the one quantity is less than another quantity"))
+(defmethod q< ((x real) (y real) &optional p-value)
+  (declare (ignore p-value))
+  (< x y))
+(defmethod q< ((x quantity) (y real) &optional (p-value 0.95))
+  (unless (unitlessp x)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp x)
+      ;; Quantity has no uncertainty
+      (< (value x) y)
+      ;; Quantity has uncertainty
+      (< (+ (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
+(defmethod q< ((x real) (y quantity) &optional (p-value 0.95))
+  (unless (unitlessp y)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp y)
+      ;; Quantity has no uncertainty
+      (< x (value y))
+      ;; Quantity has uncertainty
+      (< x (- (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
+(defmethod q< ((x quantity) (y quantity) &optional (p-value 0.95))
+  (unless (units-convertible (unit x) (unit y))
+    (error "Cannot compare quantities that are not convertible in units."))
+  (let ((delta (q- y x)))
+    (> (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
+(export 'q<)
+
+(defgeneric q<= (x y &optional p-value) (:documentation "Determines whether the one quantity is less or equal to another quantity"))
+(defmethod q<= ((x real) (y real) &optional p-value)
+  (declare (ignore p-value))
+  (<= x y))
+(defmethod q<= ((x quantity) (y real) &optional (p-value 0.95))
+  (unless (unitlessp x)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp x)
+      ;; Quantity has no uncertainty
+      (<= (value x) y)
+      ;; Quantity has uncertainty
+      (<= (+ (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
+(defmethod q<= ((x real) (y quantity) &optional (p-value 0.95))
+  (unless (unitlessp y)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp y)
+      ;; Quantity has no uncertainty
+      (<= x (value y))
+      ;; Quantity has uncertainty
+      (<= x (- (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
+(defmethod q<= ((x quantity) (y quantity) &optional (p-value 0.95))
+  (unless (units-convertible (unit x) (unit y))
+    (error "Cannot compare quantities that are not convertible in units."))
+  (let ((delta (q- y x)))
+    (>= (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
+(export 'q<=)
+
+(defgeneric q> (x y &optional p-value) (:documentation "Determines whether the one quantity is greater than another quantity"))
+(defmethod q> ((x real) (y real) &optional p-value)
+  (declare (ignore p-value))
+  (> x y))
+(defmethod q> ((x quantity) (y real) &optional (p-value 0.95))
+  (unless (unitlessp x)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp x)
+      ;; Quantity has no uncertainty
+      (> (value x) y)
+      ;; Quantity has uncertainty
+      (> (- (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
+(defmethod q> ((x real) (y quantity) &optional (p-value 0.95))
+  (unless (unitlessp y)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp y)
+      ;; Quantity has no uncertainty
+      (> x (value y))
+      ;; Quantity has uncertainty
+      (> x (+ (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
+(defmethod q> ((x quantity) (y quantity) &optional (p-value 0.95))
+  (unless (units-convertible (unit x) (unit y))
+    (error "Cannot compare quantities that are not convertible in units."))
+  (let ((delta (q- x y)))
+    (> (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
+(export 'q>)
+
+(defgeneric q>= (x y &optional p-value) (:documentation "Determines whether the one quantity is greater or equal to another quantity"))
+(defmethod q>= ((x real) (y real) &optional p-value)
+  (declare (ignore p-value))
+  (>= x y))
+(defmethod q>= ((x quantity) (y real) &optional (p-value 0.95))
+  (unless (unitlessp x)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp x)
+      ;; Quantity has no uncertainty
+      (>= (value x) y)
+      ;; Quantity has uncertainty
+      (>= (- (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
+(defmethod q>= ((x real) (y quantity) &optional (p-value 0.95))
+  (unless (unitlessp y)
+    (error "Cannot compare quanity with units with a real number."))
+  ;; Quantity is unitless
+  (if (errorlessp y)
+      ;; Quantity has no uncertainty
+      (>= x (value y))
+      ;; Quantity has uncertainty
+      (>= x (+ (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
+(defmethod q>= ((x quantity) (y quantity) &optional (p-value 0.95))
+  (unless (units-convertible (unit x) (unit y))
+    (error "Cannot compare quantities that are not convertible in units."))
+  (let ((delta (q- x y)))
+    (>= (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
+(export 'q>=)
+
 ;; Rounding functions ---------------------------------------------------------------
 
 (defun round-to (number digits &optional place)
