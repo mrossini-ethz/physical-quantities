@@ -41,7 +41,12 @@
     (q= #q(1 +/- 0.1 kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error 0.1 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
     (q= #q(1 +/- 10 % kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
     ;; Full syntax, mixed symbol options
-    (q= #q(1 +- 10 % kg m ** 2 / s to the 2 / k per mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))))
+    (q= #q(1 +- 10 % kg m ** 2 / s to the 2 / k per mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
+
+    ;; Units
+    (units-equal (mkunit m / s) (make-unit '(m 1) '(s -1)))
+    (not (units-equal (mkunit m s) (make-unit '(m 1) '(s -1))))
+    (not (units-equal (mkunit m / s) (make-unit '(km 1) '(s -1))))))
 
 (define-test conversion-test ()
   (check
@@ -374,10 +379,26 @@
                    -> metre)
                 simple-error)))
 
+(define-test predicate-test ()
+  (check
+    ;; units-equal
+    (units-equal (mkunit m / s) (mkunit / s m))
+    (not (units-equal (mkunit km / h) (mkunit m / s)))
+    (units-equal (mkunit m ^ 2 / s / m) (mkunit m / s))
+    (not (units-equal (mkunit newton) (mkunit kg m / s ^ 2)))
+    ;; units-equalp
+    (units-equalp (mkunit newton) (mkunit m kg / s ^ 2))
+    (not (units-equalp (mkunit km / h) (mkunit m / s)))
+    ;; units-convertible
+    (units-convertible (mkunit km / h) (mkunit m / s))
+    (units-convertible (mkunit kw h) (mkunit joule))
+    (not (units-convertible (mkunit km / h) (mkunit m / s ^ 2)))))
+
 (define-test physical-quantities-test ()
   (check
     (definition-test)
     (conversion-test)
     (operations-test)
+    (predicate-test)
     (interface-test)
     (namespace-test)))

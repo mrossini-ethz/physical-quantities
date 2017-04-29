@@ -2,7 +2,13 @@
 
 ;; Unit interface ------------------------------------------------------------------
 
+(defmacro mkunit (&rest expr)
+  "Human interface to make a unit."
+  `(dereference-unit (make-unit ,@(parseq 'unit expr))))
+(export 'mkunit)
+
 (defun make-unit (&rest unit-factors)
+  "Machine interface for making a unit."
   (loop for uf in unit-factors collect
        (cond
          ((unit-factor-p uf) uf)
@@ -77,6 +83,19 @@
     (when (ll= a b)
       (loop for uf-a in a always
            (have uf-a b :test #'uf-equal)))))
+(export 'units-equal)
+
+(defun units-equalp (unit-a unit-b)
+  ;; Reduces both units and compares the unit factors for equality (in unit and power)
+  (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
+    (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
+      (and (equalp conv-a conv-b) (units-equal base-unit-a base-unit-b)))))
+(export 'units-equalp)
+
+(defun units-convertible (unit-a unit-b)
+  ;; Expands and reduces both units and compares the unit factors for equality (in unit and power)
+  (units-equal (expand-unit unit-a) (expand-unit unit-b)))
+(export 'units-convertible)
 
 (defgeneric convert-unit% (value unit-a &optional unit-b))
 (defmethod convert-unit% ((value number) unit-a &optional unit-b)
