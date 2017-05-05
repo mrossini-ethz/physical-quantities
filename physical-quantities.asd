@@ -14,7 +14,7 @@
                (:file "quantity" :depends-on ("package"))
                (:file "unit-database" :depends-on ("package" "utils" "unit-factor"))
                (:file "units" :depends-on ("package" "utils" "quantity" "unit-factor" "unit-database"))
-               (:file "numeric" :depends-on ("package" "utils" "quantity" "units"))
+               (:file "numeric" :depends-on ("package" "utils" "quantity" "units" "conditions"))
                (:file "read-macro" :depends-on ("package" "utils" "quantity" "units"))
                (:file "si-units" :depends-on ("package" "unit-database" "read-macro" "parse-rules")))
   :in-order-to ((test-op (test-op :physical-quantities-test))))

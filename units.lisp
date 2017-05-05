@@ -102,7 +102,7 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
-        (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit unit-a) (print-unit unit-b) base-unit-a base-unit-b))
+        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit unit-a) (str-unit unit-b) base-unit-a base-unit-b))
       (/ (* value conv-a) conv-b))))
 (defmethod convert-unit% ((q quantity) unit-a &optional unit-b)
   (when unit-b
@@ -110,7 +110,7 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
-        (error "Cannot convert unit ~a into ~a (base units: ~a -> ~a)!" (print-unit (unit q)) (print-unit unit-a) base-unit-a base-unit-b))
+        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit q) (str-unit unit-a) base-unit-a base-unit-b))
       (make-quantity% :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
 (defun convert-unit (quantity unit)
@@ -140,23 +140,28 @@
 (defun sort-unit (unit)
   (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
 
-(defun print-unit (unit)
+(defun str-unit (obj)
   ;; Prints the given unit in human readable form
-  (if unit
-      ;; List of unit factors is not empty
-      (with-output-to-string (stream)
-        ;; Loop over the unit factors
-        (loop
-           for uf in (sort-unit (copy-tree unit))
-           for i upfrom 0
-           ;; Insert a space unless it's before the first unit factor
-           when (plusp i) do (format stream " ")
-           do
-             (cond
-               ((and (minusp (uf-power uf)) (= (uf-power uf) -1)) (format stream "/ ~a" (uf-unit uf)))
-               ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
-               ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
-               (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf))))))
-      ;; List of unit factors is empty, therefore unit 1
-      "1"))
-(export 'print-unit)
+  (cond
+    ;; nil
+    ((null obj) "1")
+    ;; number
+    ((numberp obj) "1")
+    ;; quantity
+    ((quantityp obj) (str-unit (unit obj)))
+    ;; unit
+    ((listp obj) (with-output-to-string (stream)
+                    ;; Loop over the unit factors
+                    (loop
+                       for uf in (sort-unit (copy-tree obj))
+                       for i upfrom 0
+                       ;; Insert a space unless it's before the first unit factor
+                       when (plusp i) do (format stream " ")
+                       do
+                         (cond
+                           ((and (minusp (uf-power uf)) (= (uf-power uf) -1)) (format stream "/ ~a" (uf-unit uf)))
+                           ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
+                           ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
+                           (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf)))))))
+    (t (error "Cannot print the unit of object ~a (type: ~a)." obj (type-of obj)))))
+(export 'str-unit)

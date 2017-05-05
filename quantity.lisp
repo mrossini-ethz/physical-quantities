@@ -8,7 +8,7 @@
 
 (defmethod print-object ((obj quantity) stream)
   (print-unreadable-object (obj stream :type t)
-    (format stream "VALUE: ~a, ERROR: ~a, UNIT: ~a" (value obj) (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj)) (print-unit (unit obj)))))
+    (format stream "VALUE: ~a, ERROR: ~a, UNIT: ~a" (value obj) (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj)) (str-unit (unit obj)))))
 
 ;; Error functions
 (defun ae (val err)
