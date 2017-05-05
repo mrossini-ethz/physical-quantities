@@ -7,6 +7,7 @@
   :license "GPLv2"
   :depends-on ("parseq")
   :components ((:file "package")
+               (:file "conditions")
                (:file "utils" :depends-on ("package"))
                (:file "parse-rules" :depends-on ("package"))
                (:file "unit-factor" :depends-on ("package"))
