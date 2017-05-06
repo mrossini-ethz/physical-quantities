@@ -128,7 +128,7 @@
     (when (has-error-p power)
       (error "Real cannot be raised to a power with uncertainty/error."))
     (unless (integerp (value power))
-      (error "Use qexpt to raise to non-integer powers."))
+      (f-error operation-undefined-error () "Operation (QPOW BASE POWER) undefined if POWER has non-integer value."))
     (let ((v (expt base val)))
       (make-quantity% :value v :error 0))))
 (defmethod qpow ((base quantity) (power quantity))
@@ -139,7 +139,7 @@
     (when (has-error-p power)
       (error "Quantity cannot be raised to a power with uncertainty/error."))
     (unless (integerp (value power))
-      (error "Use pexpt to raise to non-integer powers."))
+      (f-error operation-undefined-error () "Operation (QPOW BASE POWER) undefined if POWER has non-integer value."))
     (qpow base (value power))))
 (export 'qpow)
 
@@ -147,14 +147,14 @@
 (defgeneric qroot (radicand degree) (:documentation "Computes the nth root of a given quantity. The degree must be an integer and the result real."))
 (defmethod qroot ((radicand real) (degree integer))
   (unless (plusp degree)
-    (error "The degree of a root must be greater than zero."))
+    (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) undefined unless DEGREE is positive."))
   (cond
     ((and (minusp radicand) (oddp degree)) (- (expt (- radicand) (/ degree))))
-    ((and (minusp radicand) (evenp degree)) (error "Cannot compute the root of a negative number when the degree is even."))
+    ((and (minusp radicand) (evenp degree)) (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) undefined if RADICAND has negative value and DEGREE is even."))
     (t (expt radicand (/ degree)))))
 (defmethod qroot ((radicand quantity) (degree integer))
   (unless (plusp degree)
-    (error "The degree of a root must be greater than zero."))
+    (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) undefined unless DEGREE is positive."))
   (let ((val (qroot (value radicand) degree)))
     (make-quantity% :value val :error (if (zerop (value radicand)) 0 (abs (/ (* val (aerr radicand)) (value radicand) degree))) :unit (root-unit (unit radicand) degree))))
 (defmethod qroot ((radicand real) (degree quantity))
@@ -205,7 +205,7 @@
     (qroot (qpow base n) d)))
 (defmethod qexpt ((base quantity) (exponent float))
   (unless (unitlessp base)
-    (error "Exponentiation of a base with unit with a floating point exponent is undefined."))
+    (f-error operation-undefined-error () "Operation (QEXPT BASE EXPONENT) undefined if BASE is quantity with unit and EXPONENT has floating-point value."))
   (let ((val (qexpt (value base) exponent)))
     (make-quantity% :value val :error (if (zerop (value base)) 0 (abs (/ (* exponent val (aerr base)) (value base)))))))
 (defmethod qexpt ((base quantity) (exponent quantity))
@@ -216,7 +216,7 @@
       ;; -> Exponent is unitless, but has an error. Base is anything.
       (progn
         (unless (unitlessp base)
-          (error "Exponentiation of base with units and exponent with uncertainty/error is not possible."))
+          (f-error operation-undefined-error () "Operation (QEXPT BASE EXPONENT) undefined if BASE is quantity with unit and EXPONENT is quantity with uncertainty/error."))
         ;; -> Exponent is unitless, but has an error. Base is unitless.
         (when (and (minusp (value base)) (has-error-p exponent))
           (error "Error propagation for exponentiation of a negative base with an exponent with uncertainty/error is undefined."))
