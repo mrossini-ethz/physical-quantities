@@ -137,7 +137,7 @@
               (multiple-value-bind (result found) (gethash unit *unit-abbreviation-table*)
                 (if found
                     (lookup-unit result)
-                    (error "Unknown unit ~a!" unit))))))))
+                    (f-error invalid-unit-reference-error () "Unit ~a is not defined." unit))))))))
 
 (defmacro with-unit-lookup ((base-unit translation unit) &body body)
   `(multiple-value-bind (,base-unit ,translation) (lookup-unit ,unit)
