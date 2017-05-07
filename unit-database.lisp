@@ -14,7 +14,7 @@
   (unless (and (integerp base) (plusp base))
     (f-error unit-definition-semantic-error () "BASE in unit prefix definition must be an integer greater than zero."))
   (unless (and (integerp power) (not (zerop power)))
-    (f-error () "POWER in unit prefix definition must be an integer different from zero."))
+    (f-error unit-definition-semantic-error () "POWER in unit prefix definition must be an integer different from zero."))
   (let ((name-str (symbol-name name)) (abbrev-str (if abbrev (symbol-name abbrev))))
     ;; Check for name conflicts. Names and abbreviations can be treated separately.
     (when (has-key name-str *unit-prefix-table*)
@@ -87,10 +87,10 @@
     (f-error unit-definition-conflict-error () "Unit ~a is already defined." name))
   (loop for alias in (mklist aliases)
      when (unit-hash-key-check alias)
-    (f-error unit-definition-conflict-error () "Unit ~a is already defined." alias))
+     do (f-error unit-definition-conflict-error () "Unit ~a is already defined." alias))
   (loop for abbrev in (mklist abbrevs)
      when (unit-hash-key-check abbrev)
-    (f-error unit-definition-conflict-error () "Unit ~a is already defined." abbrev)))
+     do (f-error unit-definition-conflict-error () "Unit ~a is already defined." abbrev)))
 
 (defun symbol-prefix (prefix symbols)
   (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
