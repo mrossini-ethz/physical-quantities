@@ -57,10 +57,10 @@
 
 (defun make-quantity (&key (value 0) (error 0) (error-type :absolute) (unit ()))
   (unless (realp value)
-    (error "The value of a quantity must be a real number."))
+    (f-error quantity-definition-semantic-error () "VALUE in (MAKE-QUANTITY :VALUE VALUE) must be a real number."))
   (unless (and (realp error) (>= error 0))
-    (error "The error of a quantity must be a positive real number."))
+    (f-error quantity-definition-semantic-error () "ERROR in (MAKE-QUANTITY :ERROR ERROR) must be a positive real number."))
   (unless (have error-type '(:absolute :relative))
-    (error "The error type for a quantity must be either :absolute or :relative."))
+    (f-error quantity-definition-syntax-error () "ERROR-TYPE in (MAKE-QUANTITY :ERROR-TYPE ERROR-TYPE) must be either :ABSOLUTE or :RELATIVE."))
   (make-instance 'quantity :value value :error (if (eql error-type :absolute) error (- error)) :unit (if (unitp unit) unit (apply #'make-unit unit))))
 (export 'make-quantity)

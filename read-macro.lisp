@@ -21,7 +21,7 @@
   "Function to define quantities without the reader macro."
   (let ((result (parseq 'quantity expr)))
     (unless result
-      (error "Syntax error in quantity definition ~{~a~^ ~}." expr))
+      (f-error quantity-definition-syntax-error () "Syntax error in quantity definition ~{~a~^ ~}." expr))
     (destructuring-bind ((val err) unit-a unit-b) result
       `(eval-quantity ,val ,err (list ,@unit-a) (list ,@unit-b)))))
 (export 'quantity)

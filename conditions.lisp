@@ -21,7 +21,9 @@
 (define-condition error-propagation-error (physical-quantities-error) () (:documentation "Error for situations in which the propagation of uncertainty is undefined"))
 (export 'error-propagation-error)
 
-(define-condition unit-syntax-error (physical-quantities-error) () (:documentation "Syntax error when referencing units"))
+(define-condition quantity-definition-error (physical-quantities-error) () (:documentation "Generic error for quantity definitions."))
+(define-condition quantity-definition-syntax-error (quantity-definition-error) () (:documentation "Syntax error in the definition of a quantity/unit"))
+(define-condition quantity-definition-semantic-error (quantity-definition-error) () (:documentation "Semantic error in the definition of a quantity/unit"))
 (export 'unit-syntax-error)
 
 (defmacro f-error (type (&rest initargs) control &rest args)

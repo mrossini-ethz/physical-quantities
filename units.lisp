@@ -14,7 +14,7 @@
          ((unit-factor-p uf) uf)
          ((and (listp uf) (l= uf 2) (stringp (first uf)) (integerp (second uf))) (make-uf (lookup-unit (first uf)) (second uf)))
          ((and (listp uf) (l= uf 2) (symbolp (first uf)) (integerp (second uf))) (make-uf (lookup-unit (symbol-name (first uf))) (second uf)))
-         (t (error "Invalid unit factor specified.")))))
+         (t (f-error quantity-definition-syntax-error () "UNIT-FACTORS in (MAKE-UNIT &rest UNIT-FACTORS) must be lists of two elements: (LIST <SYMBOL> <INTEGER>).")))))
 (export 'make-unit)
 
 (defun unitp (object)
