@@ -106,7 +106,7 @@
       (/ (* value conv-a) conv-b))))
 (defmethod convert-unit% ((q quantity) unit-a &optional unit-b)
   (when unit-b
-    (error (format nil "Overdefined unit conversion!")))
+    (error "Overdefined unit conversion!"))
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
@@ -115,7 +115,7 @@
 
 (defun convert-unit (quantity unit)
   (unless (quantityp quantity)
-    (error "Quantity must be of type quantity."))
+    (f-error operation-undefined-error () "QUANTITY in operation (CONVERT-UNIT QUANTITY UNIT) must be of type quantity."))
   (convert-unit% quantity (if (unitp unit) unit (apply #'make-unit unit))))
 (export 'convert-unit)
 
@@ -135,7 +135,7 @@
      when (zerop (rem (uf-power uf) index))
      collect (make-uf (uf-unit uf) (/ (uf-power uf) index))
      else
-     do (error (format nil "Cannot extract the ~:r root of the unit ~a!" index unit))))
+     do (f-error operation-undefined-error () "INDEX in operation (ROOT-UNIT UNIT INDEX) is undefined if INDEX is ~a and UNIT is ~a." index (str-unit unit))))
 
 (defun sort-unit (unit)
   (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
@@ -163,5 +163,5 @@
                            ((and (minusp (uf-power uf)) (< (uf-power uf) -1)) (format stream "/ ~a ^ ~a" (uf-unit uf) (- (uf-power uf))))
                            ((= (uf-power uf) 1) (format stream "~a" (uf-unit uf)))
                            (t (format stream "~a ^ ~a" (uf-unit uf) (uf-power uf)))))))
-    (t (error "Cannot print the unit of object ~a (type: ~a)." obj (type-of obj)))))
+    (t (f-error operation-undefined-error () "Operation (STR-UNIT OBJ) is undefined if OBJ is of type ~a." (type-of obj)))))
 (export 'str-unit)

@@ -155,8 +155,11 @@
 (defmethod qroot ((radicand quantity) (degree integer))
   (unless (plusp degree)
     (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) undefined unless DEGREE is positive."))
-  (let ((val (qroot (value radicand) degree)))
-    (make-quantity% :value val :error (if (zerop (value radicand)) 0 (abs (/ (* val (aerr radicand)) (value radicand) degree))) :unit (root-unit (unit radicand) degree))))
+  (let ((val (qroot (value radicand) degree)) unit)
+    (handler-case (setf unit (root-unit (unit radicand) degree))
+      (operation-undefined-error () (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) is undefined if DEGREE is ~a and RADICAND is quantity with unit ~a."
+                                             degree (str-unit (unit radicand)))))
+    (make-quantity% :value val :error (if (zerop (value radicand)) 0 (abs (/ (* val (aerr radicand)) (value radicand) degree))) :unit unit)))
 (defmethod qroot ((radicand real) (degree quantity))
   (unless (unitlessp degree)
     (f-error invalid-unit-operation-error () "DEGREE in operation (QROOT RADICAND DEGREE) must be unitless."))
