@@ -8,20 +8,20 @@
   "Defines a unit prefix such as kilo in kilometre. Apart from the name the power is required (3 for kilo) together with the base that defaults to 10. An abbreviation for the prefix is also allowed which will be used in combination with abbreviated units."
   ;; Check inputs
   (unless (symbolp name)
-    (error "Unit prefix must be a symbol."))
+    (f-error unit-definition-syntax-error () "NAME in unit prefix definition must be a symbol."))
   (unless (symbolp abbrev)
-    (error "Unit prefix abbreviation must be a symbol."))
+    (f-error unit-definition-syntax-error () "ABBREV in unit prefix definition must be a symbol."))
   (unless (and (integerp base) (plusp base))
-    (error "Unit prefix base must be an integer greater than zero."))
+    (f-error unit-definition-semantic-error () "BASE in unit prefix definition must be an integer greater than zero."))
   (unless (and (integerp power) (not (zerop power)))
-    (error "Unit prefix power must be an integer different from zero."))
+    (f-error () "POWER in unit prefix definition must be an integer different from zero."))
   (let ((name-str (symbol-name name)) (abbrev-str (if abbrev (symbol-name abbrev))))
     ;; Check for name conflicts. Names and abbreviations can be treated separately.
     (when (has-key name-str *unit-prefix-table*)
-      (error "Unit prefix ~a is already defined." name-str))
+      (f-error unit-definition-conflict-error () "Unit prefix ~a is already defined." name-str))
     (when abbrev-str
       (loop for v being the hash-values of *unit-prefix-table* when (string= abbrev-str (third v)) do
-           (error "Unit prefix ~a is already defined." abbrev-str)))
+           (f-error unit-definition-conflict-error () "Unit prefix ~a is already defined." abbrev-str)))
     ;; Add the prefixes to the hash table
     (setf (gethash name-str *unit-prefix-table*) (list base power abbrev-str))
     ;; FIXME: add prefixes to existing units
@@ -84,13 +84,13 @@
 
 (defun table-check (name aliases abbrevs)
   (when (unit-hash-key-check name)
-    (error "Unit ~a is already defined." name))
+    (f-error unit-definition-conflict-error () "Unit ~a is already defined." name))
   (loop for alias in (mklist aliases)
      when (unit-hash-key-check alias)
-     do (error "Unit ~a is already defined." alias))
+    (f-error unit-definition-conflict-error () "Unit ~a is already defined." alias))
   (loop for abbrev in (mklist abbrevs)
      when (unit-hash-key-check abbrev)
-     do (error "Unit ~a is already defined." abbrev)))
+    (f-error unit-definition-conflict-error () "Unit ~a is already defined." abbrev)))
 
 (defun symbol-prefix (prefix symbols)
   (mapcar #'(lambda (x) (symb prefix x)) (mklist symbols)))
