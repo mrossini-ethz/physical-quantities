@@ -102,7 +102,7 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
-        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit unit-a) (str-unit unit-b) base-unit-a base-unit-b))
+        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit unit-a) (str-unit unit-b) (str-unit base-unit-a) (str-unit base-unit-b)))
       (/ (* value conv-a) conv-b))))
 (defmethod convert-unit% ((q quantity) unit-a &optional unit-b)
   (when unit-b
@@ -110,12 +110,12 @@
   (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
       (unless (units-equal base-unit-a base-unit-b)
-        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit q) (str-unit unit-a) base-unit-a base-unit-b))
+        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit q) (str-unit unit-a) (str-unit base-unit-a) (str-unit base-unit-b)))
       (make-quantity% :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
 
 (defun convert-unit (quantity unit)
-  (unless (quantityp quantity)
-    (f-error operation-undefined-error () "QUANTITY in operation (CONVERT-UNIT QUANTITY UNIT) must be of type quantity."))
+  (when (realp quantity)
+    (setf quantity (make-quantity :value quantity)))
   (convert-unit% quantity (if (unitp unit) unit (apply #'make-unit unit))))
 (export 'convert-unit)
 

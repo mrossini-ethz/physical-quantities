@@ -28,7 +28,7 @@
     (qtest #q(1 metre) :value 1 :error 0 :unit '((m 1)))
     (qtest #q(1 meter) :value 1 :error 0 :unit '((m 1)))
     ;; Unknown units
-    (condition= #q(1 foo) simple-error)
+    (condition= #q(1 foo) invalid-unit-reference-error)
     ;; Value and multiple unit factors
     (qtest #q(1 m / s ^ 2) :value 1 :error 0 :unit '((m 1) (s -2)))
     (qtest #q(1 km / h) :value 1 :error 0 :unit '((km 1) (h -1)))
@@ -65,7 +65,7 @@
     (qtest #q(1 kelvin -> celsius) :value 1 :error 0 :unit '((celsius 1)))
     (qtest #q(1 rad -> deg) :value (/ 180 pi) :error 0 :unit '((degree 1)))
     ;; Incompatible units
-    (condition= #q(1 m -> s) simple-error)))
+    (condition= #q(1 m -> s) invalid-unit-conversion-error)))
 
 (define-test operations-test ()
   (check
@@ -75,17 +75,17 @@
     (= (q+ 2 -3) -1)
     ;; Addition, a: quantity, b: real
     (qtest (q+ #q(2) -3) :value -1)
-    (condition= (q+ #q(2 m) -3) simple-error)
+    (condition= (q+ #q(2 m) -3) invalid-unit-conversion-error)
     ;; Addition, a: real, b: quantity
     (qtest (q+ 2 #q(-3)) :value -1)
-    (condition= (q+ 2 #q(-3 m)) simple-error)
+    (condition= (q+ 2 #q(-3 m)) invalid-unit-conversion-error)
     ;; Addition, exactly same units
     (qtest (q+ #q(1 m) #q(2 m)) :value 3 :error 0 :unit '((m 1)))
     ;; Addition, same units, different prefixes
     (qtest (q+ #q(1 m) #q(2 cm)) :value 102/100 :error 0 :unit '((m 1)))
     (qtest (q+ #q(2 cm) #q(1 m)) :value 102 :error 0 :unit '((cm 1)))
     ;; Addition, different units
-    (condition= (q+ #q(1 m) #q(2 s)) simple-error)
+    (condition= (q+ #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
     ;; Subtraction, one arg
     (= (q- 3) -3)
@@ -98,7 +98,7 @@
     (qtest (q- #q(1 m) #q(2 cm)) :value 98/100 :error 0 :unit '((m 1)))
     (qtest (q- #q(2 cm) #q(1 m)) :value -98 :error 0 :unit '((cm 1)))
     ;; Subtraction, different units
-    (condition= (q- #q(1 m) #q(2 s)) simple-error)
+    (condition= (q- #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
     ;; Multiplication, no args
     (= (q*) 1)
@@ -156,9 +156,9 @@
     (qtest (qpow #q(-2 +/- 0.1 m) 3) :value -8 :unit '((m 3)))
     (qtest (qpow #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((m -3)))
     ;; Power, Base: real, Exponent: quantity
-    (condition= (qpow 2 #q(3 m)) simple-error)
-    (condition= (qpow 2 #q(3 +/- 0.1)) simple-error)
-    (condition= (qpow 2 #q(1/3)) simple-error)
+    (condition= (qpow 2 #q(3 m)) invalid-unit-operation-error)
+    (condition= (qpow 2 #q(3 +/- 0.1)) operation-undefined-error)
+    (condition= (qpow 2 #q(1/3)) operation-undefined-error)
     (qtest (qpow 2 #q(3)) :value 8 :error 0 :unit ())
     (qtest (qpow 2 #q(-3)) :value 1/8 :unit ())
     (qtest (qpow 0 #q(3)) :value 0 :unit ())
@@ -169,7 +169,7 @@
     ;; unitless
     (qtest (qpow #q(2) #q(3)) :value 8 :unit '())
     (qtest (qpow #q(2 +/- 0.1) #q(3)) :value 8 :unit '())
-    (condition= (qpow #q(2) #q(1/3)) simple-error)
+    (condition= (qpow #q(2) #q(1/3)) operation-undefined-error)
     ;; with units
     (qtest (qpow #q(2 m) #q(3)) :value 8 :unit '((m 3)))
     (qtest (qpow #q(2 +/- 0.1 m) #q(3)) :value 8 :unit '((m 3)))
@@ -178,15 +178,15 @@
     (condition= (qpow #q(0 +/- 0.1 m) #q(-3)) division-by-zero)
     (qtest (qpow #q(-2 +/- 0.1 m) #q(3)) :value -8 :unit '((m 3)))
     (qtest (qpow #q(-2 +/- 0.1 m) #q(-3)) :value -1/8 :unit '((m -3)))
-    (condition= (qpow #q(2 m) #q(3 +/- 0.1)) simple-error)
+    (condition= (qpow #q(2 m) #q(3 +/- 0.1)) operation-undefined-error)
 
     ;; Root, no units
     (= (qroot 27 3) 3)
     (= (qroot -27 3) -3)
     (= (qroot 16 4) 2)
-    (condition= (qroot -16 4) simple-error)
-    (condition= (qroot 2 0) simple-error)
-    (condition= (qroot 2 -1) simple-error)
+    (condition= (qroot -16 4) operation-undefined-error)
+    (condition= (qroot 2 0) operation-undefined-error)
+    (condition= (qroot 2 -1) operation-undefined-error)
     ;; Root, radicand: quantity, degree: integer
     ;; unitess
     (qtest (qroot #q(27) 3) :value 3 :error 0 :unit ())
@@ -194,38 +194,38 @@
     (qtest (qroot #q(-27) 3) :value -3 :error 0 :unit ())
     (qtest (qroot #q(16) 4) :value 2 :error 0 :unit ())
     (qtest (qroot #q(0 +/- 0.1) 2) :value 0 :error 0 :unit ())
-    (condition= (qroot #q(-16) 4) simple-error)
-    (condition= (qroot #q(2) 0) simple-error)
-    (condition= (qroot #q(2) -1) simple-error)
+    (condition= (qroot #q(-16) 4) operation-undefined-error)
+    (condition= (qroot #q(2) 0) operation-undefined-error)
+    (condition= (qroot #q(2) -1) operation-undefined-error)
     ;; with units
     (qtest (qroot #q(27 m ^ 3) 3) :value 3 :error 0 :unit '((m 1)))
     (qtest (qroot #q(27 +/- 0.1 m ^ 3) 3) :value 3 :unit '((m 1)))
-    (condition= (qroot #q(27 m ^ 4) 3) simple-error)
+    (condition= (qroot #q(27 m ^ 4) 3) invalid-unit-operation-error)
     ;; Root, radicand: real, degree: quantity
     ;; unitless, errorless
     (qtest (qroot 27 #q(3)) :value 3 :error 0 :unit ())
     (qtest (qroot -27 #q(3)) :value -3 :error 0 :unit ())
     (qtest (qroot 16 #q(4)) :value 2 :error 0 :unit ())
-    (condition= (qroot -16 #q(4)) simple-error)
+    (condition= (qroot -16 #q(4)) operation-undefined-error)
     ;; not unitless, not errorless
-    (condition= (qroot 27 #q(3 +/- 0.1)) simple-error)
-    (condition= (qroot 27 #q(3 m)) simple-error)
+    (condition= (qroot 27 #q(3 +/- 0.1)) operation-undefined-error)
+    (condition= (qroot 27 #q(3 m)) invalid-unit-operation-error)
     ;; Root, radicand: quantity, degree: quantity
     ;; degree unitless, errorless
     (qtest (qroot #q(27) #q(3)) :value 3 :error 0 :unit ())
     (qtest (qroot #q(27 +/- 0.2) #q(3)) :value 3 :unit ())
     (qtest (qroot #q(-27) #q(3)) :value -3 :error 0 :unit ())
     (qtest (qroot #q(16) #q(4)) :value 2 :error 0 :unit ())
-    (condition= (qroot #q(-16) #q(4)) simple-error)
-    (condition= (qroot #q(2) #q(0)) simple-error)
-    (condition= (qroot #q(2) #q(-1)) simple-error)
+    (condition= (qroot #q(-16) #q(4)) operation-undefined-error)
+    (condition= (qroot #q(2) #q(0)) operation-undefined-error)
+    (condition= (qroot #q(2) #q(-1)) operation-undefined-error)
     ;; degree not unitless, errorless
-    (condition= (qroot #q(27) #q(3 +/- 0.1)) simple-error)
-    (condition= (qroot #q(27) #q(3 m)) simple-error)
+    (condition= (qroot #q(27) #q(3 +/- 0.1)) operation-undefined-error)
+    (condition= (qroot #q(27) #q(3 m)) invalid-unit-operation-error)
     ;; radicand with units
     (qtest (qroot #q(27 m ^ 3 / s ^ 3) #q(3)) :value 3 :error 0 :unit '((m 1) (s -1)))
     (qtest (qroot #q(27 +/- 0.1 m ^ 3 / s ^ 3) #q(3)) :value 3 :unit '((m 1) (s -1)))
-    (condition= (qroot #q(27 m ^ 3 / s ^ 4) #q(3)) simple-error)
+    (condition= (qroot #q(27 m ^ 3 / s ^ 4) #q(3)) invalid-unit-operation-error)
 
     ;; Square root
     (= (qsqrt 9) 3)
@@ -236,7 +236,7 @@
     ;; Exponentiation qexp, exponent: quantity
     (qtest (qexp #q(-3)) :value (exp -3) :error 0 :unit ())
     (qtest (qexp #q(-3 +/- 0.1)) :value (exp -3) :unit ())
-    (condition= (qexp #q(1 m)) simple-error)
+    (condition= (qexp #q(1 m)) invalid-unit-operation-error)
 
     ;; Exponentiation qexpt, base: real, exponent: real
     (= (qexpt -2 -3) -1/8)
@@ -244,26 +244,26 @@
     ;; Exponentiation qexpt, base: real, exponent: quantity
     (qtest (qexpt -2 #q(-3)) :value -1/8 :error 0 :unit ())
     (qtest (qexpt 2 #q(-3 +/- 0.1)) :value 1/8 :unit ())
-    (condition= (qexpt -2 #q(-3 +/- 0.1)) simple-error)
-    (condition= (qexpt 2 #q(3 m)) simple-error)
+    (condition= (qexpt -2 #q(-3 +/- 0.1)) error-propagation-error)
+    (condition= (qexpt 2 #q(3 m)) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: integer
     (qtest (qexpt #q(-2 m) -3) :value -1/8 :error 0 :unit '((m -3)))
     (qtest (qexpt #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((m -3)))
     ;; Exponentiation qexpt, base: quantity, exponent: ratio
     (qtest (qexpt #q(27 m ^ 3) 1/3) :value 3 :error 0 :unit '((m 1)))
     (qtest (qexpt #q(27 m ^ 3) 2/3) :value 9 :error 0 :unit '((m 2)))
-    (condition= (qexpt #q(27 m ^ 3) 2/5) simple-error)
+    (condition= (qexpt #q(27 m ^ 3) 2/5) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: float
     (qtest (qexpt #q(0) 0.33) :value 0 :error 0)
     (qtest (qexpt #q(27) 0.33) :value (expt 27 0.33))
-    (condition= (qexpt #q(27 m) 0.33) simple-error)
+    (condition= (qexpt #q(27 m) 0.33) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: quantity
-    (condition= (qexpt #q(27) #q(3 m)) simple-error)
+    (condition= (qexpt #q(27) #q(3 m)) invalid-unit-operation-error)
     (qtest (qexpt #q(0) #q(1/3)) :value 0 :error 0 :unit ())
     (qtest (qexpt #q(27) #q(1/3)) :value 3 :error 0 :unit ())
     (qtest (qexpt #q(27) #q(1/3 +/- 0.01)) :value 3 :unit ())
-    (condition= (qexpt #q(27 m) #q(1/3 +/- 0.01)) simple-error)
-    (condition= (qexpt #q(-27) #q(1/3 +/- 0.01)) simple-error)
+    (condition= (qexpt #q(27 m) #q(1/3 +/- 0.01)) invalid-unit-operation-error)
+    (condition= (qexpt #q(-27) #q(1/3 +/- 0.01)) error-propagation-error)
     (qtest (qexpt #q(27 +/- 0.2) #q(1/3 +/- 0.01)) :value 3 :unit ())
 
     ;; Logarithm qln
@@ -274,69 +274,69 @@
     (= (qlog 100 10) 2)
     ;; Logarithm qlog, number: quantity, base: real
     (qtest (qlog #q(100 +/- 0.1) 10) :value 2 :unit ())
-    (condition= (qlog #q(100 +/- 0.1 m) 10) simple-error)
+    (condition= (qlog #q(100 +/- 0.1 m) 10) invalid-unit-operation-error)
     ;; Logarithm qlog, number: real, base: quantity
     (qtest (qlog 100 #q(10 +/- 0.1)) :value 2 :unit ())
-    (condition= (qlog 100 #q(10 +/- 0.1 m)) simple-error)
+    (condition= (qlog 100 #q(10 +/- 0.1 m)) invalid-unit-operation-error)
     ;; Logarithm qlog, number: quantity, base: quantity
     (qtest (qlog #q(100 +/- 1) #q(10 +/- 0.1)) :value 2 :unit ())
-    (condition= (qlog #q(100 +/- 1 m)  #q(10 +/- 0.1 m)) simple-error)
+    (condition= (qlog #q(100 +/- 1 m)  #q(10 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Trigonometric functions
     ;; qsin
     (= (qsin 2) (sin 2))
     (qtest (qsin #q(2 +/- 0.1)) :value (sin 2) :unit ())
-    (condition= (qsin #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qsin #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcos
     (= (qcos 2) (cos 2))
     (qtest (qcos #q(2 +/- 0.1)) :value (cos 2) :unit ())
-    (condition= (qcos #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qcos #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qtan
     (= (qtan 2) (tan 2))
     (qtest (qtan #q(2 +/- 0.1)) :value (tan 2) :unit ())
-    (condition= (qtan #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qtan #q(2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Inverse trigonometric functions
     ;; qasin
     (= (qasin 1/2) (asin 1/2))
     (qtest (qasin #q(1/2 +/- 0.1)) :value (asin 1/2) :unit ())
-    (condition= (qasin #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qasin #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qacos
     (= (qacos 1/2) (acos 1/2))
     (qtest (qacos #q(1/2 +/- 0.1)) :value (acos 1/2) :unit ())
-    (condition= (qacos #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qacos #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qatan
     (= (qatan 1/2) (atan 1/2))
     (qtest (qatan #q(1/2 +/- 0.1)) :value (atan 1/2) :unit ())
-    (condition= (qatan #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qatan #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Hyperbolic functions
     ;; qsinh
     (= (qsinh 2) (sinh 2))
     (qtest (qsinh #q(2 +/- 0.1)) :value (sinh 2) :unit ())
-    (condition= (qsinh #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qsinh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcosh
     (= (qcosh 2) (cosh 2))
     (qtest (qcosh #q(2 +/- 0.1)) :value (cosh 2) :unit ())
-    (condition= (qcosh #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qcosh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qtanh
     (= (qtanh 2) (tanh 2))
     (qtest (qtanh #q(2 +/- 0.1)) :value (tanh 2) :unit ())
-    (condition= (qtanh #q(2 +/- 0.1 m)) simple-error)
+    (condition= (qtanh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Inverse hyperbolic functions
     ;; qasinh
     (= (qasinh 1/2) (asinh 1/2))
     (qtest (qasinh #q(1/2 +/- 0.1)) :value (asinh 1/2) :unit ())
-    (condition= (qasinh #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qasinh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qacosh
     (= (qacosh 1/2) (acosh 1/2))
     (qtest (qacosh #q(1/2 +/- 0.1)) :value (acosh 1/2) :unit ())
-    (condition= (qacosh #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qacosh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qatanh
     (= (qatanh 1/2) (atanh 1/2))
     (qtest (qatanh #q(1/2 +/- 0.1)) :value (atanh 1/2) :unit ())
-    (condition= (qatanh #q(1/2 +/- 0.1 m)) simple-error)
+    (condition= (qatanh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Absolute value
     (= (qabs -3) 3)
@@ -350,34 +350,35 @@
     (qtest (make-quantity :error 1) :value 0 :error 1 :unit ())
     (qtest (make-quantity :error 1 :error-type :relative) :value 0 :error -1 :unit ())
     (qtest (make-quantity :value 2 :error 0.2 :unit '((m 1) (s -2))) :value 2 :error 0.2 :unit '((m 1) (s -2)))
-    (condition= (make-quantity :value #C(1 1)) simple-error)
-    (condition= (make-quantity :error -1) simple-error)
-    (condition= (make-quantity :error-type :pq) simple-error)
+    (condition= (make-quantity :value #C(1 1)) quantity-definition-semantic-error)
+    (condition= (make-quantity :error -1) quantity-definition-semantic-error)
+    (condition= (make-quantity :error-type :pq) quantity-definition-syntax-error)
 
     ;; make-unit
     (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '(m 1) '(s -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
     (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '("M" 1) '("S" -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
-    (condition= (make-unit '(m 1 2)) simple-error)
+    (condition= (make-unit '(m 1 2)) quantity-definition-syntax-error)
 
     ;; convert-unit
     (qtest (convert-unit #q(10 +/- 1/10 m / s) '((km 1) (h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
     (qtest (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(km 1) '(h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
-    (condition= (convert-unit 10  '((km 1) (h -1))) simple-error)))
+    (condition= (convert-unit 10 '((km 1) (h -1))) invalid-unit-conversion-error)))
 
 (define-test namespace-test ()
   (check
     (with-local-units
-      (condition= #q(1 km) simple-error))
+      (condition= #q(1 km) invalid-unit-reference-error))
     (with-saved-units
       (qtest #q(1 km) :value 1 :error 0 :unit '((kilometre 1))))
     (with-saved-units
       (define-unit foo :abbrev fo)
       (q/ #q(1 foo) #q(1 second)))
+    (condition= #q(1 foo) invalid-unit-reference-error)
     (condition= #q((with-saved-units
-                     (define-unit foo :abbrev fo)
-                     (q/ #q(1 foo) #q(1 second)))
+                     (define-unit bar)
+                     (q/ #q(1 bar) #q(1 second)))
                    -> metre)
-                simple-error)))
+                invalid-unit-reference-error)))
 
 (define-test predicate-test ()
   (check
@@ -429,8 +430,8 @@
     (q= 3 #q(3))
     (not (q= #q(3) 2))
     (not (q= 2 #q(3)))
-    (condition= (q= #q(3 m) 3) simple-error)
-    (condition= (q= 3 #q(3 m)) simple-error)
+    (condition= (q= #q(3 m) 3) invalid-unit-conversion-error)
+    (condition= (q= 3 #q(3 m)) invalid-unit-conversion-error)
     (identity (loop for v upfrom 25 to 28 never (q= #q(30 +/- 1) (+ v 0.035))))
     (identity (loop for v upfrom 28 to 30 always (q= #q(30 +/- 1) (+ v 0.045))))
     (identity (loop for v upfrom 30 to 32 always (q= #q(30 +/- 1) (- v 0.045))))
@@ -438,7 +439,7 @@
     ;; q= quantity, quantity
     (q= #q(3) #q(3))
     (not (q= #q(3) #q(4)))
-    (condition= (q= #q(3 m) #q(3 s)) simple-error)
+    (condition= (q= #q(3 m) #q(3 s)) invalid-unit-conversion-error)
     (not (q= #q(30 +/- 2 m) #q(21 +/- 2 m)))
     (not (q= #q(30 +/- 2 m) #q(22 +/- 2 m)))
     (not (q= #q(30 +/- 2 m) #q(23 +/- 2 m)))
@@ -470,19 +471,19 @@
     (not (q< 2 2))
     (not (q< 3 2))
     ;; q< quantity, real
-    (condition= (q< #q(3 m) 3) simple-error)
+    (condition= (q< #q(3 m) 3) invalid-unit-conversion-error)
     (q< #q(3) 4)
     (not (q< #q(3) 3))
     (identity (loop for v upfrom 195 to 201 with q = #q(200 +/- 1) never (q< q (+ v 0.64))))
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q< q (+ v 0.65))))
     ;; q< real, quantity
-    (condition= (q< 3 #q(3 m)) simple-error)
+    (condition= (q< 3 #q(3 m)) invalid-unit-conversion-error)
     (q< 3 #q(4))
     (not (q< 3 #q(3)))
     (identity (loop for v upfrom 195 to 199 with q = #q(200 +/- 1) always (q< (- v 0.65) q)))
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q< (- v 0.64) q)))
     ;; q< quantity, quantity
-    (condition= (q< #q(3 m) #q(3 s)) simple-error)
+    (condition= (q< #q(3 m) #q(3 s)) invalid-unit-conversion-error)
     (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q< q #q((+ v 0.667) +/- 1))))
     (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q< q #q((+ v 0.689) +/- 1))))
 
@@ -491,19 +492,19 @@
     (q<= 2 2)
     (not (q<= 3 2))
     ;; q<= quantity, real
-    (condition= (q<= #q(3 m) 3) simple-error)
+    (condition= (q<= #q(3 m) 3) invalid-unit-conversion-error)
     (q<= #q(3) 4)
     (q<= #q(3) 3)
     (identity (loop for v upfrom 195 to 201 with q = #q(200 +/- 1) never (q<= q (+ v 0.64))))
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q<= q (+ v 0.65))))
     ;; q<= real, quantity
-    (condition= (q<= 3 #q(3 m)) simple-error)
+    (condition= (q<= 3 #q(3 m)) invalid-unit-conversion-error)
     (q<= 3 #q(4))
     (q<= 3 #q(3))
     (identity (loop for v upfrom 195 to 199 with q = #q(200 +/- 1) always (q<= (- v 0.65) q)))
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q<= (- v 0.64) q)))
     ;; q<= quantity, quantity
-    (condition= (q<= #q(3 m) #q(3 s)) simple-error)
+    (condition= (q<= #q(3 m) #q(3 s)) invalid-unit-conversion-error)
     (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q<= q #q((+ v 0.667) +/- 1))))
     (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q<= q #q((+ v 0.689) +/- 1))))
 
@@ -512,19 +513,19 @@
     (not (q> 2 2))
     (not (q> 2 3))
     ;; q> quantity, real
-    (condition= (q> #q(3 m) 3) simple-error)
+    (condition= (q> #q(3 m) 3) invalid-unit-conversion-error)
     (q> #q(4) 3)
     (not (q> #q(3) 3))
     (identity (loop for v upfrom 195 to 199 with q = #q(200 +/- 1) always (q> q (- v 0.65))))
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q> q (- v 0.64))))
     ;; q> real, quantity
-    (condition= (q> 3 #q(3 m)) simple-error)
+    (condition= (q> 3 #q(3 m)) invalid-unit-conversion-error)
     (q> 4 #q(3))
     (not (q> 3 #q(3)))
     (identity (loop for v upfrom 195 to 201 with q = #q(200 +/- 1) never (q> (+ v 0.64) q)))
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q> (+ v 0.65) q)))
     ;; q> quantity, quantity
-    (condition= (q> #q(3 m) #q(3 s)) simple-error)
+    (condition= (q> #q(3 m) #q(3 s)) invalid-unit-conversion-error)
     (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q> q #q((- v 0.689) +/- 1))))
     (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q> q #q((- v 0.667) +/- 1))))
 
@@ -533,19 +534,19 @@
     (q>= 2 2)
     (not (q>= 2 3))
     ;; q>= quantity, real
-    (condition= (q>= #q(3 m) 3) simple-error)
+    (condition= (q>= #q(3 m) 3) invalid-unit-conversion-error)
     (q>= #q(4) 3)
     (q>= #q(3) 3)
     (identity (loop for v upfrom 195 to 199 with q = #q(200 +/- 1) always (q>= q (- v 0.65))))
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q>= q (- v 0.64))))
     ;; q>= real, quantity
-    (condition= (q>= 3 #q(3 m)) simple-error)
+    (condition= (q>= 3 #q(3 m)) invalid-unit-conversion-error)
     (q>= 4 #q(3))
     (q>= 3 #q(3))
     (identity (loop for v upfrom 195 to 201 with q = #q(200 +/- 1) never (q>= (+ v 0.64) q)))
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q>= (+ v 0.65) q)))
     ;; q>= quantity, quantity
-    (condition= (q>= #q(3 m) #q(3 s)) simple-error)
+    (condition= (q>= #q(3 m) #q(3 s)) invalid-unit-conversion-error)
     (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q>= q #q((- v 0.689) +/- 1))))
     (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q>= q #q((- v 0.667) +/- 1))))
 
