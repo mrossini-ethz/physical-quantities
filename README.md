@@ -205,6 +205,30 @@ Several unit and prefix definitions can be used in a program by locally defining
 
 Please note that the unit definitions use dynamic scope an not lexical scope. This means that the unit definitions are only local during the time spent within the macro call. It is therefore not possible to close over the unit definitions. While quantities with local unit can be returned from this macro call, the unit may be undefined after the time of the call or may have a different meaning.
 
+## Errors/Conditions
+The errors/conditions signaled by the library are all subtypes of `physical-quantities-error` which itself is a subtype of `standard-error`.
+However, no event triggers the `physical-quantities-error` directly.
+Instead, the most specific error is signaled.
+Here is the complete hierarcy of conditions:
+
+* `quantity-definition-error`
+  * `quantity-definition-syntax-error`: There is a syntax error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `(make-unit ...)` or `(mkunit ...)`.
+  * `quantity-definition-semantic-error`: There is a semantic error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `(make-unit ...)` or `(mkunit ...)`.
+
+* `invalid-unit-error`
+  * `invalid-unit-operation-error`: The mathematical operation can not be performed on the input quantity with the given unit.
+  * `invalid-unit-conversion-error`: The units can not be converted into each other.
+  * `invalid-unit-reference-error`: The unit is undefined or the  prefix unit combination does not exist.
+
+* `operation-undefined-error`: The mathematical operation is undefined for the given input parameters.
+
+* `error-propagation-error`: The propagation of uncertainty can not be performed with the given parameters.
+
+* `unit-definition-error`
+  * `unit-definition-syntax-error`: A syntactic problem exists with a `(define-unit ...)` or `(define-prefix ...)` form.
+  * `unit-definition-semantic-error`: There is a semantic error with a `(define-unit ...)` or `(define-prefix ...)` form.
+  * `unit-definition-conflict-error`: The unit or prefix is already defined or a combination of prefix and unit conflicts with another unit.
+
 ## License
 
 Physical Quantities: Lisp Library
