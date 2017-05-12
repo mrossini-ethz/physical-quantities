@@ -237,6 +237,7 @@
     ;; Square root
     (= (qsqrt 9) 3)
     (qtest (qsqrt #q(9 m ^ 2)) :value 3 :unit '((m 1)))
+    (qtest (qsqrt #q(9 joule / kilogram)) :value 3 :unit '((m 1) (s -1)))
 
     ;; Exponentiation qexp, exponent: real
     (= (qexp -3) (exp -3))
@@ -259,6 +260,7 @@
     ;; Exponentiation qexpt, base: quantity, exponent: ratio
     (qtest (qexpt #q(27 m ^ 3) 1/3) :value 3 :error 0 :unit '((m 1)))
     (qtest (qexpt #q(27 m ^ 3) 2/3) :value 9 :error 0 :unit '((m 2)))
+    (qtest (qexpt #q(4 joule / kilogram) 3/2) :value 8 :error 0 :unit '((m 3) (s -3)))
     (condition= (qexpt #q(27 m ^ 3) 2/5) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: float
     (qtest (qexpt #q(0) 0.33) :value 0 :error 0)

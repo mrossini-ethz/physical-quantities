@@ -131,11 +131,20 @@
       (power-unit (first units) -1)))
 
 (defun root-unit (unit index)
-  (loop for uf in unit
-     when (zerop (rem (uf-power uf) index))
-     collect (make-uf (uf-unit uf) (/ (uf-power uf) index))
-     else
-     do (f-error operation-undefined-error () "INDEX in operation (ROOT-UNIT UNIT INDEX) is undefined if INDEX is ~a and UNIT is ~a." index (str-unit unit))))
+  (if (loop for uf in unit always (zerop (rem (uf-power uf) index)))
+      ;; Root the unit directly (without converting to base units)
+      (values (loop for uf in unit
+                 when (zerop (rem (uf-power uf) index))
+                 collect (make-uf (uf-unit uf) (/ (uf-power uf) index)))
+              1)
+      ;; Convert to base units, then attempt to root the unit
+      (multiple-value-bind (base-unit conv) (expand-unit unit)
+        (values (loop for uf in base-unit
+                   when (zerop (rem (uf-power uf) index))
+                   collect (make-uf (uf-unit uf) (/ (uf-power uf) index))
+                   else
+                   do (f-error operation-undefined-error () "INDEX in operation (ROOT-UNIT UNIT INDEX) is undefined if INDEX is ~a and UNIT is ~a (base units: ~a)." index (str-unit unit) (str-unit base-unit)))
+                (expt conv (/ index))))))
 
 (defun sort-unit (unit)
   (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
