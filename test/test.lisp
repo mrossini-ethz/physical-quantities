@@ -369,16 +369,7 @@
     (with-local-units
       (condition= #q(1 km) invalid-unit-reference-error))
     (with-saved-units
-      (qtest #q(1 km) :value 1 :error 0 :unit '((kilometre 1))))
-    (with-saved-units
-      (define-unit foo :abbrev fo)
-      (q/ #q(1 foo) #q(1 second)))
-    (condition= #q(1 foo) invalid-unit-reference-error)
-    (condition= #q((with-saved-units
-                     (define-unit bar)
-                     (q/ #q(1 bar) #q(1 second)))
-                   -> metre)
-                invalid-unit-reference-error)))
+      (qtest #q(1 km) :value 1 :error 0 :unit '((kilometre 1))))))
 
 (define-test predicate-test ()
   (check
