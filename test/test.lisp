@@ -92,6 +92,12 @@
     (qtest (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((m 1)))
     ;; Subtraction, real numbers
     (= (q- 2 -3) 5)
+    ;; Subtraction, a: quantity, b: real
+    (qtest (q- 2 #q(-3)) :value 5)
+    (condition= (q- 2 #q(-3 m)) invalid-unit-conversion-error)
+    ;; Subtraction, a: quantity, b: real
+    (qtest (q- #q(2) -3) :value 5)
+    (condition= (q- #q(2 m) -3) invalid-unit-conversion-error)
     ;; Subtraction, exactly same units
     (qtest (q- #q(1 m) #q(2 m)) :value -1 :error 0 :unit '((m 1)))
     ;; Subtraction, same units, different prefixes
@@ -172,6 +178,7 @@
     (condition= (qpow #q(2) #q(1/3)) operation-undefined-error)
     ;; with units
     (qtest (qpow #q(2 m) #q(3)) :value 8 :unit '((m 3)))
+    (condition= (qpow #q(2 m) #q(3 m)) invalid-unit-operation-error)
     (qtest (qpow #q(2 +/- 0.1 m) #q(3)) :value 8 :unit '((m 3)))
     (qtest (qpow #q(2 +/- 0.1 m) #q(-3)) :value 1/8 :unit '((m -3)))
     (qtest (qpow #q(0 +/- 0.1 m) #q(3)) :value 0 :error 0 :unit '((m 3)))
@@ -269,6 +276,7 @@
     ;; Logarithm qln
     (= (qln 2) (log 2))
     (qtest (qln #q(2 +/- 0.1)) :value (log 2))
+    (condition= (qln #q(2 m)) invalid-unit-operation-error)
 
     ;; Logarithm qlog, reals
     (= (qlog 100 10) 2)
@@ -280,6 +288,7 @@
     (condition= (qlog 100 #q(10 +/- 0.1 m)) invalid-unit-operation-error)
     ;; Logarithm qlog, number: quantity, base: quantity
     (qtest (qlog #q(100 +/- 1) #q(10 +/- 0.1)) :value 2 :unit ())
+    (condition= (qlog #q(100 +/- 1) #q(10 +/- 0.1 m)) invalid-unit-operation-error)
     (condition= (qlog #q(100 +/- 1 m)  #q(10 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Trigonometric functions
