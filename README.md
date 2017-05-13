@@ -36,7 +36,9 @@ To define a quantity, either the macro `(quantity ...)` or the read macro `#q(..
 
 The following lines of code are equivalent:
 ```
-(quantity 1 kilogram)
+(quantity 1 "kilogram")
+
+(define-read-macro)
 #q(1 kilogram)
 #q(1 kg)
 ```
@@ -51,6 +53,8 @@ This sets the absolute error to 0.2 kg. To define a relative error, the `%` sign
 Note that there must be space between numbers and symbols.
 
 It is permitted to use variables or even lisp forms instead of numbers for both the value/magnitude or the uncertainty/error.
+Note that the `#q(...)` read macro preserves the case of symbols rather than converting them to uppercase.
+This means that when using symbols within the forms for value/magnitude or uncertainty/error they have to be typed in uppercase.
 
 ### Specifying units
 Units are specified as a sequence of unit factors. A unit factor is essentially a unit and a power. The power defaults to 1 when only naming the unit (e.g. `metre`). If a power of -1 is desired, either the symbol `/` or `per` can be inserted before the unit (e.g `/ metre` or `per metre`). Powers other than 1 or -1 are specified in any of the following ways:
@@ -66,7 +70,8 @@ Note that `/ metre` is equivalent to `metre ^ -1`.
 
 As pointed out above, the full unit is a sequence of such unit factors:
 ```
-kilogram metre ^ 2 / second ^ 2 / kelvin / mol
+kilogram metre ^ 2 / second ^ 2 / kelvin / mole
+kg m ^ 2 / s ^ 2 / K / mol
 ```
 Please note that separating symbols with spaces is compulsory.
 
@@ -74,10 +79,10 @@ Please note that separating symbols with spaces is compulsory.
 Units can be abbreviated. This means that `kilometre` is interpreted in the same way as `km`. Note that both the unit `metre` and the prefix `kilo` is abbreviated. Mixing abbreviation (e.g. `kmetre` or `kilom`) is forbidden.
 
 ### Upper- and lowercase
-Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved while within the `#q(...)` read macro, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. For the `(quantity ...)` macro, this is not possible, therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macro *does* accept symbols, but they will be converted to uppercase (causing a unit lookup eror) unless they are escaped by using the `|...|` syntax for example.
+Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved while within the `#q(...)` read macro, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. For the `(quantity ...)` macro, this is not possible, therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macro `(quantity ...)` does accept symbols, but they will be converted to uppercase by the reader (causing a unit lookup error) unless they are escaped by using the `|...|` syntax for example.
 
 ## Operations
-Common Lisp does not allow the redefinition of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `number` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
+Common Lisp does not easily allow the redefinition/overloading of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `number` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
 ```
 (q* a (q+ b (qsqrt c)))
 ```
@@ -99,7 +104,7 @@ Instead of using a variable as the first form in the macro call, one could speci
 ```
 #q((Q* 1/2 m (QPOW V 2)) -> joule)
 ```
-or even a quantity definition
+(note the uppercase symbols in the `#q(...)` form) or even a quantity definition
 ```
 #q(20 +/- 1 % m / s -> km / h)
 ```
@@ -175,7 +180,9 @@ To combine such tests, the following composing functions are provided:
 * `(prefix-and &rest functions)` This will acccept a prefix if all functions accept it.
 * `(prefix-or &rest functions)` This will accept a prefix if a single function accepts it.
 
-You can use the standard composing function `complement` where necessary. The above example could be rewritten to read
+You can use the standard composing function `complement` where necessary.
+
+The above example could be rewritten to read
 ```
 (define-unit "tonne" :def (1000 "kilogram") :prefix-test (prefix-range 10 3 nil))
 ```
