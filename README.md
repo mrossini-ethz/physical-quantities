@@ -29,7 +29,7 @@ The following example illustrates the use of the library:
 ```
 This will print
 ```
-#<QUANTITY VALUE: 89.87552, ERROR: 1.0 %, UNIT: PETAJOULE>
+#<QUANTITY VALUE: 89.87552, ERROR: 1.0 %, UNIT: petajoule>
 ```
 ## Defining quantities
 To define a quantity, either the macro `(quantity ...)` or the read macro `#q(...)` can be used. For the latter, the function `(define-read-macro)` must be called first.
@@ -40,7 +40,7 @@ The following lines of code are equivalent:
 #q(1 kilogram)
 #q(1 kg)
 ```
-This creates an object of type `quantity`. Its value is the integer `1` and its unit is `KILOGRAM`. The uncertainty/error of this quantity is zero because it was not specified. To do this, the symbol `+/-` (or `+-`), followed by a number, can be inserted into the macro call after the value:
+This creates an object of type `quantity`. Its value is the integer `1` and its unit is `kilogram`. The uncertainty/error of this quantity is zero because it was not specified. To do this, the symbol `+/-` (or `+-`), followed by a number, can be inserted into the macro call after the value:
 ```
 #q(1 +/- 0.2 kg)
 ```
@@ -73,15 +73,8 @@ Please note that separating symbols with spaces is compulsory.
 ### Unit abbreviations
 Units can be abbreviated. This means that `kilometre` is interpreted in the same way as `km`. Note that both the unit `metre` and the prefix `kilo` is abbreviated. Mixing abbreviation (e.g. `kmetre` or `kilom`) is forbidden.
 
-While unit abbreviations are allowed, their use is somewhat dangerous. Mostly, the problem is that lisp does not distinguish between lower- and uppercase letters when reading symbols, converting everything to uppercase. This leads to name conflicts and/or confusion:
-
-* Is `MM` millimetre or megametre?
-* Is `EV` electronvolt or exavolt?
-* Is `PA` pascal or picoampere?
-
-If you want to make sure that your probe does not crash on mars, it is better to avoid using abbreviations.
-
-The problem can be avoided by defining units and prefixes using the `|...|` syntax, e.g. `|Pa|`. One would have to use this syntax throughout the code using the units, however.
+### Upper- and lowercase
+Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved while within the `#q(...)` read macro, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. For the `(quantity ...)` macro, this is not possible, therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macro *does* accept symbols, but they will be converted to uppercase (causing a unit lookup eror) unless they are escaped by using the `|...|` syntax for example.
 
 ## Operations
 Common Lisp does not allow the redefinition of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `number` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
@@ -95,16 +88,16 @@ When using these operations, error propagation will be performed automatically. 
 Units can be converted by calling the `(quantity ...)` or `#q(...)` macro and specifying `->` and a new unit:
 ```
 (let ((v #q(20 m / s)))
-  (setf v #q(v -> km / h))
+  (setf v #q(V -> km / h))
   (print v))
 ```
 This would print
 ```
-#<QUANTITY VALUE: 72, ERROR: 0, UNIT: KILOMETRE / HOUR>
+#<QUANTITY VALUE: 72, ERROR: 0, UNIT: kilometre / hour>
 ```
 Instead of using a variable as the first form in the macro call, one could specify any other form such as
 ```
-#q((q* 1/2 m (qpow v 2)) -> joule)
+#q((Q* 1/2 m (QPOW V 2)) -> joule)
 ```
 or even a quantity definition
 ```
@@ -132,44 +125,44 @@ These are all places, so they are `setf`able. Note that setting the absolute unc
 ## Machine interface
 The macros `(quantity ...)` and `#q(...)` are intended as convenience for humans. They are not very lispy. To create quantities in a manner that is suitable for machines, the function `(make-quantity ...)` is defined:
 ```
-(make-quantity :value 1 :error 0.1 :error-type :absolute :unit '((m 1) (s -1)))
+(make-quantity :value 1 :error 0.1 :error-type :absolute :unit '(("m" 1) ("s" -1)))
 ```
-This is equivalent to `#q(1 +/- 0.1 m / s)`. Note that the unit is a list of unit factors with each unit factor being a symbol that stands for a unit and a power. Being a function, the arguments are evaluated before the `quantity` is created. This allows the unit to be a variable. Units can be created with the `(make-unit ...)` function:
+This is equivalent to `#q(1 +/- 0.1 m / s)`. Note that the unit is a list of unit factors with each unit factor being a symbol or string that stands for a unit and an integer for the power. Being a function, the arguments are evaluated before the `quantity` is created. This allows the unit to be a variable. Units can be created with the `(make-unit ...)` function:
 ```
-(make-unit '(m 1) '(s -1))
+(make-unit '("m" 1) '("s" -1))
 ```
 Units can be converted using the `(convert-unit ...)` function. It accepts either a unit object or a list of unit factors:
 ```
-(convert-unit v (make-unit '(km 1) '(h -1)))
-(convert-unit v '((km 1) (h -1)))
+(convert-unit v (make-unit '("km" 1) '("h" -1)))
+(convert-unit v '(("km" 1) ("h" -1)))
 ```
 
 ## Defining new units
 New units can be defined using the `(define-unit ...)` macro:
 ```
-(define-unit metre :abbrev m :alias meter)
-(define-unit watthour :def (1 watt hour) :abbrev wh)
-(define-unit mile :def (1609344/1000 metre) :abbrev mi)
-(define-unit gravity :def (981/100 metre / second ^ 2) :abbrev g)
+(define-unit "metre" :abbrev "m" :alias "meter")
+(define-unit "watthour" :def (1 "watt" "hour") :abbrev "Wh")
+(define-unit "mile" :def (1609344/1000 "metre") :abbrev "mi")
+(define-unit "gravity" :def (981/100 "metre" / "second" ^ 2) :abbrev "g")
 ```
 There are a number of keywords that may appear in the definition:
 
-* `:def` Specifies the unit in terms of another unit. Complex dependencies can be given such as `(0.3048 metre / second ^ 2)`. If this keyword is missing, the newly defined unit will be considered a base unit.
+* `:def` Specifies the unit in terms of another unit. Complex dependencies can be given such as `(0.3048 "metre" / "second" ^ 2)`. If this keyword is missing, the newly defined unit will be considered a base unit.
 * `:alias` Allows multiple (non-abbreviated) names for a unit, given as a single symbol or a list of symbols. This is helpful if there are different spellings (e.g. metre, meter).
 * `:abbrev` Abbreviations for the unit can be specified here, given as a single symbol or a list of symbols. Be careful about name conflicts (see above).
 * `:prefix-test` A function of two arguments, the base and the power, which decides whether a unit prefix is admissible for use with this unit. For more details, see below.
 * `:overwrite` A flag to suppress errors that occur when a naming conflict is detected.
 
-For all defined units and abbreviations, more units with all permissible prefixes  such as `KILOWATTHOUR` or `KWH` will automatically be defined.
+For all defined units and abbreviations, more units with all permissible prefixes  such as `kilowatthour` or `kWh` will automatically be defined.
 This may cause naming conflicts which will raise an error.
 It is possible to define which prefixes are admissible.
 
 ### Specifying admissible prefixes
-For some units, certain prefixes make no sense. For example: For the unit `TONNE`, the prefix `KILO` is widely used (`KILOTONNE`). It makes little sense, however, to use `MILLITONNE`. To specify, which prefixes are admissible, the keyword parameter `:prefix-test` can be used in the call to `define-unit`. It accepts a function of two arguments, the base and the power of a prefix. The function can then decide, whether such a prefix is admissible by returning `T` or `NIL`. Here is an example:
+For some units, certain prefixes make no sense. For example: For the unit `tonne`, the prefix `kilo` is widely used (`kilotonne`). It makes little sense, however, to use `millitonne`. To specify, which prefixes are admissible, the keyword parameter `:prefix-test` can be used in the call to `define-unit`. It accepts a function of two arguments, the base and the power of a prefix. The function can then decide, whether such a prefix is admissible by returning `T` or `NIL`. Here is an example:
 ```
-(define-unit tonne :def (1000 kilogram) :prefix-test (lambda (base power) (and (= base 10) (>= power 3))))
+(define-unit "tonne" :def (1000 "kilogram") :prefix-test (lambda (base power) (and (= base 10) (>= power 3))))
 ```
-This will only allow the units `TONNE`, `KILOTONNE`, `MEGATONNE`, etc.
+This will only allow the units `tonne`, `kilotonne`, `megatonne`, etc.
 
 To facilitate the prefix test specification, some functions are provided:
 
@@ -184,21 +177,21 @@ To combine such tests, the following composing functions are provided:
 
 You can use the standard composing function `complement` where necessary. The above example could be rewritten to read
 ```
-(define-unit tonne :def (1000 kilogram) :prefix-test (prefix-range 10 3 nil))
+(define-unit "tonne" :def (1000 "kilogram") :prefix-test (prefix-range 10 3 nil))
 ```
 
 ## Defining prefixes
 Prefixes can be defined by using the `(define-unit-prefix ...)` macro:
 ```
-(define-unit-prefix giga 9 :abbrev g)
-(define-unit-prefix gibi 3 :abbrev gi :base 1024)
+(define-unit-prefix "giga" 9 :abbrev "G")
+(define-unit-prefix "gibi" 3 :abbrev "Gi" :base 1024)
 ```
 The full name is specified first, followed by the power. Keyword parameters allow the definition of the base (defaults to 10) and abbreviation. In this example, `giga` is equivalent to 10^9 and `gibi` to 1024^3.
 
 You must define prefixes before defining the units that use them.
 
 ## Standard units and prefixes
-When calling the function `(define-si-units &optional clear-existing-units)`, the SI units will be automatically defined. More sets may be available in the future. Note that the unit prefix abbreviation for `mega` is `meg` because it would otherwise conflict with `milli`.
+When calling the function `(define-si-units &optional clear-existing-units)`, the SI units will be automatically defined. More sets may be available in the future.
 
 ## Local namespaces
 Several unit and prefix definitions can be used in a program by locally defining them. This can be done with the `(with-local-units ...)` and `(with-saved-units ...`) macros. The former completely clears the outside units and prefixes until control leaves the form. The latter makes a copy of all the unit definitions such that they can be changed within the body of the form without affecting the outisde definitions.
