@@ -27,6 +27,36 @@
 (defun copy-quantity (q)
   `(dup-quantity ,q))
 
+;; Operation definition macro --------------------------------------------------------
+
+(defmacro defqop (name arg-list &body body)
+  `(defun ,name ,arg-list
+     ,@(loop for arg in arg-list collect
+            `(cond
+               ((numberp ,arg) (setf ,arg (make-quantity :value ,arg)))
+               ((not (quantityp ,arg)) (f-error operation-undefined-error () "Operation  (~a ~{~a~^ ~} is undefined if ~a is of type ~a." ',name ',arg-list ',arg (type-of ',arg)))))
+     ,@body))
+
+(defmacro error-propagation (&rest var-derivative-pairs)
+  (unless (evenp (list-length var-derivative-pairs))
+    (error "Invalid error propagation argument list."))
+  (let* ((n (/ (list-length var-derivative-pairs) 2))
+         (gensyms (loop repeat n collect (gensym))))
+    `(let (,@(loop for i below n for var = (nth (* i 2) var-derivative-pairs) collect `(,(nth i gensyms) (value ,var))))
+       (sqrt (+ ,@(loop
+                     for i below n
+                     for var = (nth (* i 2) var-derivative-pairs)
+                     for exp = (nth (1+ (* i 2)) var-derivative-pairs)
+                     collect `(expt (* (symbol-macrolet (,@(loop for j below n
+                                                              for var2 = (nth (* j 2) var-derivative-pairs)
+                                                              for gensym = (nth j gensyms)
+                                                              collect `(,var2 ,gensym)))
+                                         ,exp)
+                                       (aerr ,var))
+                                    2)))))))
+
+;; Operations ------------------------------------------------------------------------
+
 (defgeneric binary+ (a b))
 (defmethod binary+ ((a quantity) (b quantity))
   (let ((b2 (convert-unit% b (unit a))))
