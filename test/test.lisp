@@ -19,51 +19,53 @@
     ;; Value and relative error
     (qtest #q(1 +/- 10 %)  :value 1 :error -1/10 :unit ())
     ;; Value and single unit factor
-    (qtest #q(1 m) :value 1 :error 0 :unit '((m 1)))
-    (qtest #q(1 / m) :value 1 :error 0 :unit '((m -1)))
-    (qtest #q(1 m / s) :value 1 :error 0 :unit '((m 1) (s -1)))
-    (qtest #q(1 m ^ 2) :value 1 :error 0 :unit '((m 2)))
-    (qtest #q(1 / m ^ 2) :value 1 :error 0 :unit '((m -2)))
+    (qtest #q(1 m) :value 1 :error 0 :unit '((|m| 1)))
+    (qtest #q(1 "m") :value 1 :error 0 :unit '((|m| 1)))
+    (qtest #q(1 / m) :value 1 :error 0 :unit '((|m| -1)))
+    (qtest #q(1 m / s) :value 1 :error 0 :unit '((|m| 1) (|s| -1)))
+    (qtest #q(1 m ^ 2) :value 1 :error 0 :unit '((|m| 2)))
+    (qtest #q(1 / m ^ 2) :value 1 :error 0 :unit '((|m| -2)))
     ;; Aliases
-    (qtest #q(1 metre) :value 1 :error 0 :unit '((m 1)))
-    (qtest #q(1 meter) :value 1 :error 0 :unit '((m 1)))
+    (qtest #q(1 metre) :value 1 :error 0 :unit '((|m| 1)))
+    (qtest #q(1 meter) :value 1 :error 0 :unit '((|m| 1)))
     ;; Unknown units
     (condition= #q(1 foo) invalid-unit-reference-error)
     ;; Value and multiple unit factors
-    (qtest #q(1 m / s ^ 2) :value 1 :error 0 :unit '((m 1) (s -2)))
-    (qtest #q(1 km / h) :value 1 :error 0 :unit '((km 1) (h -1)))
-    (qtest #q(1 kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error 0 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
+    (qtest #q(1 m / s ^ 2) :value 1 :error 0 :unit '((|m| 1) (|s| -2)))
+    (qtest #q(1 km / h) :value 1 :error 0 :unit '((|km| 1) (|h| -1)))
+    (qtest #q(1 kg m ^ 2 / s ^ 2 / K / mol) :value 1 :error 0 :unit '((|kilogram| 1) (|metre| 2) (|second| -2) (|kelvin| -1) (|mol| -1)))
     ;; km / m should not get reduced
-    (qtest #q(1 km / m) :value 1 :error 0 :unit '((km 1) (m -1)))
+    (qtest #q(1 km / m) :value 1 :error 0 :unit '((|km| 1) (|m| -1)))
     ;; Mixed abbreviations
-    (qtest #q(1 kilometre / m) :value 1 :error 0 :unit '((km 1) (m -1)))
+    (qtest #q(1 kilometre / m) :value 1 :error 0 :unit '((|km| 1) (|m| -1)))
     ;; Full syntax
-    (qtest #q(1 +/- 0.1 kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error 0.1 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
-    (qtest #q(1 +/- 10 % kg m ^ 2 / s ^ 2 / k / mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
+    (qtest #q(1 +/- 0.1 kg m ^ 2 / s ^ 2 / K / mol) :value 1 :error 0.1 :unit '((|kilogram| 1) (|metre| 2) (|second| -2) (|kelvin| -1) (|mol| -1)))
+    (qtest #q(1 +/- 10 % kg m ^ 2 / s ^ 2 / K / mol) :value 1 :error -1/10 :unit '((|kilogram| 1) (|metre| 2) (|second| -2) (|kelvin| -1) (|mol| -1)))
     ;; Full syntax, mixed symbol options
-    (qtest #q(1 +- 10 % kg m ** 2 / s to the 2 / k per mol) :value 1 :error -1/10 :unit '((kilogram 1) (metre 2) (second -2) (kelvin -1) (mol -1)))
+    (qtest #q(1 +- 10 % kg m ** 2 / s to the 2 / K per mol) :value 1 :error -1/10 :unit '((|kilogram| 1) (|metre| 2) (|second| -2) (|kelvin| -1) (|mol| -1)))
 
     ;; Units
-    (units-equal (mkunit m / s) (make-unit '(m 1) '(s -1)))
-    (not (units-equal (mkunit m s) (make-unit '(m 1) '(s -1))))
-    (not (units-equal (mkunit m / s) (make-unit '(km 1) '(s -1))))))
+    (units-equal (mkunit |m| / |s|) (make-unit '(|m| 1) '(|s| -1)))
+    (units-equal (mkunit "m" / "s") (make-unit '("m" 1) '("s" -1)))
+    (not (units-equal (mkunit |m| |s|) (make-unit '(|m| 1) '(|s| -1))))
+    (not (units-equal (mkunit |m| / |s|) (make-unit '(|km| 1) '(|s| -1))))))
 
 (define-test conversion-test ()
   (check
     ;; Different prefix
-    (qtest #q(1 m -> km) :value 1/1000 :error 0 :unit '((km 1)))
+    (qtest #q(1 m -> km) :value 1/1000 :error 0 :unit '((|km| 1)))
     ;; Different prefix, different unit
-    (qtest #q(1 m / s -> km / h) :value 36/10 :error 0 :unit '((km 1) (h -1)))
+    (qtest #q(1 m / s -> km / h) :value 36/10 :error 0 :unit '((|km| 1) (|h| -1)))
     ;; Different prefix, power > 1
-    (qtest #q(1 m ^ 3 -> cm ^ 3) :value 1000000 :error 0 :unit '((cm 3)))
+    (qtest #q(1 m ^ 3 -> cm ^ 3) :value 1000000 :error 0 :unit '((|cm| 3)))
     ;; Conversion factor != 1, power > 1
-    (qtest #q(1 hour ^ 2 -> second ^ 2) :value 12960000 :error 0 :unit '((s 2)))
+    (qtest #q(1 hour ^ 2 -> second ^ 2) :value 12960000 :error 0 :unit '((|s| 2)))
     ;; Derived units
-    (qtest #q(1 kg m / s ^ 2 -> newton) :value 1 :error 0 :unit '((n 1)))
-    (qtest #q(1 newton -> kg m / s ^ 2) :value 1 :error 0 :unit '((kg 1) (m 1) (s -2)))
+    (qtest #q(1 kg m / s ^ 2 -> newton) :value 1 :error 0 :unit '((|N| 1)))
+    (qtest #q(1 newton -> kg m / s ^ 2) :value 1 :error 0 :unit '((|kg| 1) (|m| 1) (|s| -2)))
     ;; Special cases
-    (qtest #q(1 kelvin -> celsius) :value 1 :error 0 :unit '((celsius 1)))
-    (qtest #q(1 rad -> deg) :value (/ 180 pi) :error 0 :unit '((degree 1)))
+    (qtest #q(1 kelvin -> celsius) :value 1 :error 0 :unit '((|celsius| 1)))
+    (qtest #q(1 rad -> deg) :value (/ 180 pi) :error 0 :unit '((|degree| 1)))
     ;; Incompatible units
     (condition= #q(1 m -> s) invalid-unit-conversion-error)))
 
@@ -80,16 +82,16 @@
     (qtest (q+ 2 #q(-3)) :value -1)
     (condition= (q+ 2 #q(-3 m)) invalid-unit-conversion-error)
     ;; Addition, exactly same units
-    (qtest (q+ #q(1 m) #q(2 m)) :value 3 :error 0 :unit '((m 1)))
+    (qtest (q+ #q(1 m) #q(2 m)) :value 3 :error 0 :unit '((|m| 1)))
     ;; Addition, same units, different prefixes
-    (qtest (q+ #q(1 m) #q(2 cm)) :value 102/100 :error 0 :unit '((m 1)))
-    (qtest (q+ #q(2 cm) #q(1 m)) :value 102 :error 0 :unit '((cm 1)))
+    (qtest (q+ #q(1 m) #q(2 cm)) :value 102/100 :error 0 :unit '((|m| 1)))
+    (qtest (q+ #q(2 cm) #q(1 m)) :value 102 :error 0 :unit '((|cm| 1)))
     ;; Addition, different units
     (condition= (q+ #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
     ;; Subtraction, one arg
     (= (q- 3) -3)
-    (qtest (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((m 1)))
+    (qtest (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((|m| 1)))
     ;; Subtraction, real numbers
     (= (q- 2 -3) 5)
     ;; Subtraction, a: quantity, b: real
@@ -99,10 +101,10 @@
     (qtest (q- #q(2) -3) :value 5)
     (condition= (q- #q(2 m) -3) invalid-unit-conversion-error)
     ;; Subtraction, exactly same units
-    (qtest (q- #q(1 m) #q(2 m)) :value -1 :error 0 :unit '((m 1)))
+    (qtest (q- #q(1 m) #q(2 m)) :value -1 :error 0 :unit '((|m| 1)))
     ;; Subtraction, same units, different prefixes
-    (qtest (q- #q(1 m) #q(2 cm)) :value 98/100 :error 0 :unit '((m 1)))
-    (qtest (q- #q(2 cm) #q(1 m)) :value -98 :error 0 :unit '((cm 1)))
+    (qtest (q- #q(1 m) #q(2 cm)) :value 98/100 :error 0 :unit '((|m| 1)))
+    (qtest (q- #q(2 cm) #q(1 m)) :value -98 :error 0 :unit '((|cm| 1)))
     ;; Subtraction, different units
     (condition= (q- #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
@@ -111,42 +113,42 @@
     ;; Multiplication, a: real, b: real
     (= (q* 2 -3) -6)
     ;; Multiplication, a: real, b: quantity
-    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 1/5 :unit '((m 1)))
+    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 1/5 :unit '((|m| 1)))
     ;; Multiplication, a: quantity, b: real
-    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6 :error 3/10 :unit '((m 1)))
+    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6 :error 3/10 :unit '((|m| 1)))
     ;; Multiplication with unitless number
-    (qtest (q* #q(1 m) 2) :value 2 :error 0 :unit '((m 1)))
-    (qtest (q* 2 #q(1 m)) :value 2 :error 0 :unit '((m 1)))
+    (qtest (q* #q(1 m) 2) :value 2 :error 0 :unit '((|m| 1)))
+    (qtest (q* 2 #q(1 m)) :value 2 :error 0 :unit '((|m| 1)))
     ;; Multiplication, exactly same units
-    (qtest (q* #q(1 m) #q(1 m)) :value 1 :error 0 :unit '((m 2)))
+    (qtest (q* #q(1 m) #q(1 m)) :value 1 :error 0 :unit '((|m| 2)))
     ;; Multiplication, same units, different prefixes
-    (qtest (q* #q(1 m) #q(2 cm)) :value 2 :error 0 :unit '((m 1) (cm 1)))
-    (qtest (q* #q(1 cm) #q(2 m)) :value 2 :error 0 :unit '((m 1) (cm 1)))
+    (qtest (q* #q(1 m) #q(2 cm)) :value 2 :error 0 :unit '((|m| 1) (|cm| 1)))
+    (qtest (q* #q(1 cm) #q(2 m)) :value 2 :error 0 :unit '((|m| 1) (|cm| 1)))
     ;; Multiplication, same units, different notation
-    (qtest (q* #q(1 kg m / s ^ 2) #q(2 n)) :value 2 :error 0 :unit '((kg 1) (m 1) (s -2) (n 1)))
+    (qtest (q* #q(1 kg m / s ^ 2) #q(2 N)) :value 2 :error 0 :unit '((|kg| 1) (|m| 1) (|s| -2) (|N| 1)))
     ;; Multiplication, different units
-    (qtest (q* #q(1 kg m / s ^ 2) #q(2 m / s)) :value 2 :error 0 :unit '((kg 1) (m 2) (s -3)))
+    (qtest (q* #q(1 kg m / s ^ 2) #q(2 m / s)) :value 2 :error 0 :unit '((|kg| 1) (|m| 2) (|s| -3)))
 
     ;; Division, one arg
     (= (q/ -2) -1/2)
-    (qtest (q/ #q(-2 m / s ^ 2)) :value -1/2 :error 0 :unit '((s 2) (m -1)))
+    (qtest (q/ #q(-2 m / s ^ 2)) :value -1/2 :error 0 :unit '((|s| 2) (|m| -1)))
     ;; Division, a: real, b: real
     (= (q/ 2 -3) -2/3)
     ;; Division, a: quantity, b: real
-    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 1/10 :unit '((m 1)))
-    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error -1/10 :unit '((m 1)))
+    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 1/10 :unit '((|m| 1)))
+    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error -1/10 :unit '((|m| 1)))
     ;; Division, a: real, b: quantity
-    (qtest (q/ 2 #q(1 +/- 1/10 m)) :value 2 :unit '((m -1)))
-    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error -1/10 :unit '((m -1)))
+    (qtest (q/ 2 #q(1 +/- 1/10 m)) :value 2 :unit '((|m| -1)))
+    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error -1/10 :unit '((|m| -1)))
     ;; Division, exactly same units
     (qtest (q/ #q(1 m) #q(1 m)) :value 1 :error 0 :unit '())
     ;; Division, same units, different prefixes
-    (qtest (q/ #q(1 m) #q(2 cm)) :value 1/2 :error 0 :unit '((m 1) (cm -1)))
-    (qtest (q/ #q(1 cm) #q(2 m)) :value 1/2 :error 0 :unit '((m -1) (cm 1)))
+    (qtest (q/ #q(1 m) #q(2 cm)) :value 1/2 :error 0 :unit '((|m| 1) (|cm| -1)))
+    (qtest (q/ #q(1 cm) #q(2 m)) :value 1/2 :error 0 :unit '((|m| -1) (|cm| 1)))
     ;; Division, same units, different notation
-    (qtest (q/ #q(1 kg m / s ^ 2) #q(2 n)) :value 1/2 :error 0 :unit '((kg 1) (m 1) (s -2) (n -1)))
+    (qtest (q/ #q(1 kg m / s ^ 2) #q(2 N)) :value 1/2 :error 0 :unit '((|kg| 1) (|m| 1) (|s| -2) (|N| -1)))
     ;; Division, different units
-    (qtest (q/ #q(1 kg m / s ^ 2) #q(2 m / s)) :value 1/2 :error 0 :unit '((kg 1) (s -1)))
+    (qtest (q/ #q(1 kg m / s ^ 2) #q(2 m / s)) :value 1/2 :error 0 :unit '((|kg| 1) (|s| -1)))
 
     ;; Power, unitless
     (= (qpow 2 3) 8)
@@ -155,12 +157,12 @@
     (condition= (qpow 0 -1) division-by-zero)
     ;; Power, Base: quantity, Exponent: integer
     (qtest (qpow #q(2 +/- 0.1 m) 0) :value 1 :unit '())
-    (qtest (qpow #q(2 +/- 0.1 m) 3) :value 8 :unit '((m 3)))
-    (qtest (qpow #q(2 +/- 0.1 m) -3) :value 1/8 :unit '((m -3)))
-    (qtest (qpow #q(0 +/- 0.1 m) 3) :value 0 :error 0 :unit '((m 3)))
+    (qtest (qpow #q(2 +/- 0.1 m) 3) :value 8 :unit '((|m| 3)))
+    (qtest (qpow #q(2 +/- 0.1 m) -3) :value 1/8 :unit '((|m| -3)))
+    (qtest (qpow #q(0 +/- 0.1 m) 3) :value 0 :error 0 :unit '((|m| 3)))
     (condition= (qpow #q(0 +/- 0.1 m) -3) division-by-zero)
-    (qtest (qpow #q(-2 +/- 0.1 m) 3) :value -8 :unit '((m 3)))
-    (qtest (qpow #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((m -3)))
+    (qtest (qpow #q(-2 +/- 0.1 m) 3) :value -8 :unit '((|m| 3)))
+    (qtest (qpow #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((|m| -3)))
     ;; Power, Base: real, Exponent: quantity
     (condition= (qpow 2 #q(3 m)) invalid-unit-operation-error)
     (condition= (qpow 2 #q(3 +/- 0.1)) operation-undefined-error)
@@ -177,14 +179,14 @@
     (qtest (qpow #q(2 +/- 0.1) #q(3)) :value 8 :unit '())
     (condition= (qpow #q(2) #q(1/3)) operation-undefined-error)
     ;; with units
-    (qtest (qpow #q(2 m) #q(3)) :value 8 :unit '((m 3)))
+    (qtest (qpow #q(2 m) #q(3)) :value 8 :unit '((|m| 3)))
     (condition= (qpow #q(2 m) #q(3 m)) invalid-unit-operation-error)
-    (qtest (qpow #q(2 +/- 0.1 m) #q(3)) :value 8 :unit '((m 3)))
-    (qtest (qpow #q(2 +/- 0.1 m) #q(-3)) :value 1/8 :unit '((m -3)))
-    (qtest (qpow #q(0 +/- 0.1 m) #q(3)) :value 0 :error 0 :unit '((m 3)))
+    (qtest (qpow #q(2 +/- 0.1 m) #q(3)) :value 8 :unit '((|m| 3)))
+    (qtest (qpow #q(2 +/- 0.1 m) #q(-3)) :value 1/8 :unit '((|m| -3)))
+    (qtest (qpow #q(0 +/- 0.1 m) #q(3)) :value 0 :error 0 :unit '((|m| 3)))
     (condition= (qpow #q(0 +/- 0.1 m) #q(-3)) division-by-zero)
-    (qtest (qpow #q(-2 +/- 0.1 m) #q(3)) :value -8 :unit '((m 3)))
-    (qtest (qpow #q(-2 +/- 0.1 m) #q(-3)) :value -1/8 :unit '((m -3)))
+    (qtest (qpow #q(-2 +/- 0.1 m) #q(3)) :value -8 :unit '((|m| 3)))
+    (qtest (qpow #q(-2 +/- 0.1 m) #q(-3)) :value -1/8 :unit '((|m| -3)))
     (condition= (qpow #q(2 m) #q(3 +/- 0.1)) operation-undefined-error)
 
     ;; Root, no units
@@ -205,8 +207,8 @@
     (condition= (qroot #q(2) 0) operation-undefined-error)
     (condition= (qroot #q(2) -1) operation-undefined-error)
     ;; with units
-    (qtest (qroot #q(27 m ^ 3) 3) :value 3 :error 0 :unit '((m 1)))
-    (qtest (qroot #q(27 +/- 0.1 m ^ 3) 3) :value 3 :unit '((m 1)))
+    (qtest (qroot #q(27 m ^ 3) 3) :value 3 :error 0 :unit '((|m| 1)))
+    (qtest (qroot #q(27 +/- 0.1 m ^ 3) 3) :value 3 :unit '((|m| 1)))
     (condition= (qroot #q(27 m ^ 4) 3) invalid-unit-operation-error)
     ;; Root, radicand: real, degree: quantity
     ;; unitless, errorless
@@ -230,14 +232,14 @@
     (condition= (qroot #q(27) #q(3 +/- 0.1)) operation-undefined-error)
     (condition= (qroot #q(27) #q(3 m)) invalid-unit-operation-error)
     ;; radicand with units
-    (qtest (qroot #q(27 m ^ 3 / s ^ 3) #q(3)) :value 3 :error 0 :unit '((m 1) (s -1)))
-    (qtest (qroot #q(27 +/- 0.1 m ^ 3 / s ^ 3) #q(3)) :value 3 :unit '((m 1) (s -1)))
+    (qtest (qroot #q(27 m ^ 3 / s ^ 3) #q(3)) :value 3 :error 0 :unit '((|m| 1) (|s| -1)))
+    (qtest (qroot #q(27 +/- 0.1 m ^ 3 / s ^ 3) #q(3)) :value 3 :unit '((|m| 1) (|s| -1)))
     (condition= (qroot #q(27 m ^ 3 / s ^ 4) #q(3)) invalid-unit-operation-error)
 
     ;; Square root
     (= (qsqrt 9) 3)
-    (qtest (qsqrt #q(9 m ^ 2)) :value 3 :unit '((m 1)))
-    (qtest (qsqrt #q(9 joule / kilogram)) :value 3 :unit '((m 1) (s -1)))
+    (qtest (qsqrt #q(9 m ^ 2)) :value 3 :unit '((|m| 1)))
+    (qtest (qsqrt #q(9 joule / kilogram)) :value 3 :unit '((|m| 1) (|s| -1)))
 
     ;; Exponentiation qexp, exponent: real
     (= (qexp -3) (exp -3))
@@ -255,12 +257,12 @@
     (condition= (qexpt -2 #q(-3 +/- 0.1)) error-propagation-error)
     (condition= (qexpt 2 #q(3 m)) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: integer
-    (qtest (qexpt #q(-2 m) -3) :value -1/8 :error 0 :unit '((m -3)))
-    (qtest (qexpt #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((m -3)))
+    (qtest (qexpt #q(-2 m) -3) :value -1/8 :error 0 :unit '((|m| -3)))
+    (qtest (qexpt #q(-2 +/- 0.1 m) -3) :value -1/8 :unit '((|m| -3)))
     ;; Exponentiation qexpt, base: quantity, exponent: ratio
-    (qtest (qexpt #q(27 m ^ 3) 1/3) :value 3 :error 0 :unit '((m 1)))
-    (qtest (qexpt #q(27 m ^ 3) 2/3) :value 9 :error 0 :unit '((m 2)))
-    (qtest (qexpt #q(4 joule / kilogram) 3/2) :value 8 :error 0 :unit '((m 3) (s -3)))
+    (qtest (qexpt #q(27 m ^ 3) 1/3) :value 3 :error 0 :unit '((|m| 1)))
+    (qtest (qexpt #q(27 m ^ 3) 2/3) :value 9 :error 0 :unit '((|m| 2)))
+    (qtest (qexpt #q(4 joule / kilogram) 3/2) :value 8 :error 0 :unit '((|m| 3) (|s| -3)))
     (condition= (qexpt #q(27 m ^ 3) 2/5) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: float
     (qtest (qexpt #q(0) 0.33) :value 0 :error 0)
@@ -351,7 +353,7 @@
 
     ;; Absolute value
     (= (qabs -3) 3)
-    (qtest (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((m 1)))))
+    (qtest (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((|m| 1)))))
 
 (define-test interface-test ()
   (check
@@ -360,27 +362,28 @@
     (qtest (make-quantity :value 1) :value 1 :error 0 :unit ())
     (qtest (make-quantity :error 1) :value 0 :error 1 :unit ())
     (qtest (make-quantity :error 1 :error-type :relative) :value 0 :error -1 :unit ())
-    (qtest (make-quantity :value 2 :error 0.2 :unit '((m 1) (s -2))) :value 2 :error 0.2 :unit '((m 1) (s -2)))
+    (qtest (make-quantity :value 2 :error 0.2 :unit '((|m| 1) (|s| -2))) :value 2 :error 0.2 :unit '((|m| 1) (|s| -2)))
+    (qtest (make-quantity :value 2 :error 0.2 :unit '(("m" 1) ("s" -2))) :value 2 :error 0.2 :unit '((|m| 1) (|s| -2)))
     (condition= (make-quantity :value #C(1 1)) quantity-definition-semantic-error)
     (condition= (make-quantity :error -1) quantity-definition-semantic-error)
     (condition= (make-quantity :error-type :pq) quantity-definition-syntax-error)
 
     ;; make-unit
-    (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '(m 1) '(s -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
-    (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '("M" 1) '("S" -1))) :value 2 :error 0.2 :unit '((m 1) (s -1)))
-    (condition= (make-unit '(m 1 2)) quantity-definition-syntax-error)
+    (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '(|m| 1) '(|s| -1))) :value 2 :error 0.2 :unit '((|m| 1) (|s| -1)))
+    (qtest (make-quantity :value 2 :error 0.2 :unit (make-unit '("m" 1) '("s" -1))) :value 2 :error 0.2 :unit '((|m| 1) (|s| -1)))
+    (condition= (make-unit '(|m| 1 2)) quantity-definition-syntax-error)
 
     ;; convert-unit
-    (qtest (convert-unit #q(10 +/- 1/10 m / s) '((km 1) (h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
-    (qtest (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(km 1) '(h -1))) :value 36 :error 36/100 :unit '((km 1) (h -1)))
-    (condition= (convert-unit 10 '((km 1) (h -1))) invalid-unit-conversion-error)))
+    (qtest (convert-unit #q(10 +/- 1/10 m / s) '((|km| 1) (|h| -1))) :value 36 :error 36/100 :unit '((|km| 1) (|h| -1)))
+    (qtest (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(|km| 1) '(|h| -1))) :value 36 :error 36/100 :unit '((|km| 1) (|h| -1)))
+    (condition= (convert-unit 10 '((|km| 1) (|h| -1))) invalid-unit-conversion-error)))
 
 (define-test namespace-test ()
   (check
     (with-local-units
       (condition= #q(1 km) invalid-unit-reference-error))
     (with-saved-units
-      (qtest #q(1 km) :value 1 :error 0 :unit '((kilometre 1))))))
+      (qtest #q(1 km) :value 1 :error 0 :unit '((|kilometre| 1))))))
 
 (define-test predicate-test ()
   (check
@@ -486,8 +489,8 @@
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q< (- v 0.64) q)))
     ;; q< quantity, quantity
     (condition= (q< #q(3 m) #q(3 s)) invalid-unit-conversion-error)
-    (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q< q #q((+ v 0.667) +/- 1))))
-    (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q< q #q((+ v 0.689) +/- 1))))
+    (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q< q #q((+ V 0.667) +/- 1))))
+    (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q< q #q((+ V 0.689) +/- 1))))
 
     ;; q<= real, real
     (q<= 2 3)
@@ -507,8 +510,8 @@
     (identity (loop for v upfrom 199 to 205 with q = #q(200 +/- 1) never (q<= (- v 0.64) q)))
     ;; q<= quantity, quantity
     (condition= (q<= #q(3 m) #q(3 s)) invalid-unit-conversion-error)
-    (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q<= q #q((+ v 0.667) +/- 1))))
-    (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q<= q #q((+ v 0.689) +/- 1))))
+    (identity (loop for v upfrom 190 to 203 with q = #q(200 +/- 2) never (q<= q #q((+ V 0.667) +/- 1))))
+    (identity (loop for v upfrom 203 to 210 with q = #q(200 +/- 2) always (q<= q #q((+ V 0.689) +/- 1))))
 
     ;; q> real, real
     (q> 3 2)
@@ -528,8 +531,8 @@
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q> (+ v 0.65) q)))
     ;; q> quantity, quantity
     (condition= (q> #q(3 m) #q(3 s)) invalid-unit-conversion-error)
-    (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q> q #q((- v 0.689) +/- 1))))
-    (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q> q #q((- v 0.667) +/- 1))))
+    (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q> q #q((- V 0.689) +/- 1))))
+    (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q> q #q((- V 0.667) +/- 1))))
 
     ;; q>= real, real
     (q>= 3 2)
@@ -549,21 +552,21 @@
     (identity (loop for v upfrom 201 to 205 with q = #q(200 +/- 1) always (q>= (+ v 0.65) q)))
     ;; q>= quantity, quantity
     (condition= (q>= #q(3 m) #q(3 s)) invalid-unit-conversion-error)
-    (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q>= q #q((- v 0.689) +/- 1))))
-    (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q>= q #q((- v 0.667) +/- 1))))
+    (identity (loop for v upfrom 190 to 197 with q = #q(200 +/- 2) always (q>= q #q((- V 0.689) +/- 1))))
+    (identity (loop for v upfrom 197 to 210 with q = #q(200 +/- 2) never (q>= q #q((- V 0.667) +/- 1))))
 
     ;; units-equal
-    (units-equal (mkunit m / s) (mkunit / s m))
-    (not (units-equal (mkunit km / h) (mkunit m / s)))
-    (units-equal (mkunit m ^ 2 / s / m) (mkunit m / s))
-    (not (units-equal (mkunit newton) (mkunit kg m / s ^ 2)))
+    (units-equal (mkunit |m| / |s|) (mkunit / |s| |m|))
+    (not (units-equal (mkunit |km| / |h|) (mkunit |m| / |s|)))
+    (units-equal (mkunit |m| ^ 2 / |s| / |m|) (mkunit |m| / |s|))
+    (not (units-equal (mkunit |newton|) (mkunit |kg| |m| / |s| ^ 2)))
     ;; units-equalp
-    (units-equalp (mkunit newton) (mkunit m kg / s ^ 2))
-    (not (units-equalp (mkunit km / h) (mkunit m / s)))
+    (units-equalp (mkunit |newton|) (mkunit |m| |kg| / |s| ^ 2))
+    (not (units-equalp (mkunit |km| / |h|) (mkunit |m| / |s|)))
     ;; units-convertible
-    (units-convertible (mkunit km / h) (mkunit m / s))
-    (units-convertible (mkunit kw h) (mkunit joule))
-    (not (units-convertible (mkunit km / h) (mkunit m / s ^ 2)))))
+    (units-convertible (mkunit |km| / |h|) (mkunit |m| / |s|))
+    (units-convertible (mkunit |kW| |h|) (mkunit |joule|))
+    (not (units-convertible (mkunit |km| / |h|) (mkunit |m| / |s| ^ 2)))))
 
 (define-test physical-quantities-test ()
   (check

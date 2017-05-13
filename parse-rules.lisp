@@ -2,7 +2,7 @@
 
 (defrule value () form)
 (defrule unit-factor () (and (? (or '/ 'per '|per|)) (not '->) (? (and (or '^ '** (and 'to 'the) (and '|to| '|the|)) form)))
-  (:destructure (per symb exponent) `(make-uf ,(symbol-name symb) ,(if exponent (if per `(- ,(second exponent)) (second exponent)) (if per -1 1)))))
+  (:destructure (per symb exponent) `(make-uf ,(if (stringp symb) symb (symbol-name symb)) ,(if exponent (if per `(- ,(second exponent)) (second exponent)) (if per -1 1)))))
 (defrule error () (and (or '+/- '+-) value (? '%))
   (:destructure (pm val percent) (declare (ignore pm)) (if percent `(- (/ ,val 100)) val)))
 (defrule errval () (and value (? error))
