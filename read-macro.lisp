@@ -27,9 +27,12 @@
 (export 'quantity)
 
 (defun read-quantity (stream char1 char2)
-  "The read macro #q(...) is an abbreviation for (quantity ...)."
+  "The read macro #q(...) is an abbreviation for (quantity ...) which does not transform lowercase symbols to uppercase."
   (declare (ignore char1 char2))
-  `(quantity ,@(read stream t nil t)))
+  `(quantity ,@(let ((*readtable* (copy-readtable *readtable*)))
+                 ;; Change the readtable such that case is preserved
+                 (setf (readtable-case *readtable*) :preserve)
+                 (read stream t nil t))))
 
 (defun define-read-macro ()
   "Lets the user define the #q(...) read macro."
