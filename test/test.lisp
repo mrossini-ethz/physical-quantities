@@ -72,9 +72,9 @@
 (define-test operations-test ()
   (check
     ;; Addition, no args
-    (= (q+) 0)
+    (qtest (q+) :value 0 :error 0 :unit nil)
     ;; Addition, unitless
-    (= (q+ 2 -3) -1)
+    (qtest (q+ 2 -3) :value -1 :error 0 :unit nil)
     ;; Addition, a: quantity, b: real
     (qtest (q+ #q(2) -3) :value -1)
     (condition= (q+ #q(2 m) -3) invalid-unit-conversion-error)
@@ -90,10 +90,10 @@
     (condition= (q+ #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
     ;; Subtraction, one arg
-    (= (q- 3) -3)
+    (qtest (q- 3) :value -3 :error 0 :unit nil)
     (qtest (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((|m| 1)))
     ;; Subtraction, real numbers
-    (= (q- 2 -3) 5)
+    (qtest (q- 2 -3) :value 5 :error 0 :unit nil)
     ;; Subtraction, a: quantity, b: real
     (qtest (q- 2 #q(-3)) :value 5)
     (condition= (q- 2 #q(-3 m)) invalid-unit-conversion-error)
@@ -109,13 +109,13 @@
     (condition= (q- #q(1 m) #q(2 s)) invalid-unit-conversion-error)
 
     ;; Multiplication, no args
-    (= (q*) 1)
+    (qtest (q*) :value 1 :error 0 :unit nil)
     ;; Multiplication, a: real, b: real
-    (= (q* 2 -3) -6)
+    (qtest (q* 2 -3) :value -6 :error 0 :unit nil)
     ;; Multiplication, a: real, b: quantity
-    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 1/5 :unit '((|m| 1)))
+    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 0.2 :unit '((|m| 1)))
     ;; Multiplication, a: quantity, b: real
-    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6 :error 3/10 :unit '((|m| 1)))
+    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6 :error 0.3 :unit '((|m| 1)))
     ;; Multiplication with unitless number
     (qtest (q* #q(1 m) 2) :value 2 :error 0 :unit '((|m| 1)))
     (qtest (q* 2 #q(1 m)) :value 2 :error 0 :unit '((|m| 1)))
@@ -130,16 +130,16 @@
     (qtest (q* #q(1 kg m / s ^ 2) #q(2 m / s)) :value 2 :error 0 :unit '((|kg| 1) (|m| 2) (|s| -3)))
 
     ;; Division, one arg
-    (= (q/ -2) -1/2)
+    (qtest (q/ -2) :value -1/2 :error 0 :unit nil)
     (qtest (q/ #q(-2 m / s ^ 2)) :value -1/2 :error 0 :unit '((|s| 2) (|m| -1)))
     ;; Division, a: real, b: real
-    (= (q/ 2 -3) -2/3)
+    (qtest (q/ 2 -3) :value -2/3 :error 0 :unit nil)
     ;; Division, a: quantity, b: real
-    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 1/10 :unit '((|m| 1)))
-    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error -1/10 :unit '((|m| 1)))
+    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 0.1 :unit '((|m| 1)))
+    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error 0.05 :unit '((|m| 1)))
     ;; Division, a: real, b: quantity
     (qtest (q/ 2 #q(1 +/- 1/10 m)) :value 2 :unit '((|m| -1)))
-    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error -1/10 :unit '((|m| -1)))
+    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error 0.2 :unit '((|m| -1)))
     ;; Division, exactly same units
     (qtest (q/ #q(1 m) #q(1 m)) :value 1 :error 0 :unit '())
     ;; Division, same units, different prefixes
