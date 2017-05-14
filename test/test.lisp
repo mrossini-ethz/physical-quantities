@@ -280,12 +280,12 @@
     (qtest (qexpt #q(27 +/- 0.2) #q(1/3 +/- 0.01)) :value 3 :unit ())
 
     ;; Logarithm qln
-    (= (qln 2) (log 2))
+    (qtest (qln 2) :value (log 2) :error 0 :unit ())
     (qtest (qln #q(2 +/- 0.1)) :value (log 2))
     (condition= (qln #q(2 m)) invalid-unit-operation-error)
 
     ;; Logarithm qlog, reals
-    (= (qlog 100 10) 2)
+    (qtest (qlog 100 10) :value 2 :error 0 :unit ())
     ;; Logarithm qlog, number: quantity, base: real
     (qtest (qlog #q(100 +/- 0.1) 10) :value 2 :unit ())
     (condition= (qlog #q(100 +/- 0.1 m) 10) invalid-unit-operation-error)
