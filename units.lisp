@@ -120,7 +120,8 @@
 (export 'convert-unit)
 
 (defun power-unit (unit power)
-  (loop for uf in unit collect (uf-pow uf power)))
+  (when (/= power 0) 
+    (loop for uf in unit collect (uf-pow uf power))))
 
 (defun multiply-units (&rest units)
   (reduce-unit (apply #'append units)))

@@ -151,12 +151,12 @@
     (qtest (q/ #q(1 kg m / s ^ 2) #q(2 m / s)) :value 1/2 :error 0 :unit '((|kg| 1) (|s| -1)))
 
     ;; Power, unitless
-    (= (qpow 2 3) 8)
-    (= (qpow 2 0) 1)
-    (= (qpow 0 0) 1)
+    (qtest (qpow 2 3) :value 8 :error 0 :unit nil)
+    (qtest (qpow 2 0) :value 1 :error 0 :unit nil)
+    (qtest (qpow 0 0) :value 1 :error 0 :unit nil)
     (condition= (qpow 0 -1) division-by-zero)
     ;; Power, Base: quantity, Exponent: integer
-    (qtest (qpow #q(2 +/- 0.1 m) 0) :value 1 :unit '())
+    (qtest (qpow #q(2 +/- 0.1 m) 0) :value 1 :error 0 :unit '())
     (qtest (qpow #q(2 +/- 0.1 m) 3) :value 8 :unit '((|m| 3)))
     (qtest (qpow #q(2 +/- 0.1 m) -3) :value 1/8 :unit '((|m| -3)))
     (qtest (qpow #q(0 +/- 0.1 m) 3) :value 0 :error 0 :unit '((|m| 3)))
