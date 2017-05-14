@@ -244,15 +244,15 @@
     (qtest (qsqrt #q(1 au metre / second ^ 2)) :value (sqrt 149597870700) :unit '((|m| 1) (|s| -1)))
 
     ;; Exponentiation qexp, exponent: real
-    (= (qexp -3) (exp -3))
+    (qtest (qexp -3) :value (exp -3) :error 0 :unit nil)
     ;; Exponentiation qexp, exponent: quantity
     (qtest (qexp #q(-3)) :value (exp -3) :error 0 :unit ())
     (qtest (qexp #q(-3 +/- 0.1)) :value (exp -3) :unit ())
     (condition= (qexp #q(1 m)) invalid-unit-operation-error)
 
     ;; Exponentiation qexpt, base: real, exponent: real
-    (= (qexpt -2 -3) -1/8)
-    (= (qexpt 0 0) 1)
+    (qtest (qexpt -2 -3) :value -1/8 :error 0 :unit ())
+    (qtest (qexpt 0 0) :value 1 :error 0 :unit ())
     ;; Exponentiation qexpt, base: real, exponent: quantity
     (qtest (qexpt -2 #q(-3)) :value -1/8 :error 0 :unit ())
     (qtest (qexpt 2 #q(-3 +/- 0.1)) :value 1/8 :unit ())
