@@ -190,9 +190,9 @@
     (condition= (qpow #q(2 m) #q(3 +/- 0.1)) operation-undefined-error)
 
     ;; Root, no units
-    (= (qroot 27 3) 3)
-    (= (qroot -27 3) -3)
-    (= (qroot 16 4) 2)
+    (qtest (qroot 27 3) :value 3 :error 0 :unit nil)
+    (qtest (qroot -27 3) :value -3 :error 0 :unit nil)
+    (qtest (qroot 16 4) :value 2 :error 0 :unit nil)
     (condition= (qroot -16 4) operation-undefined-error)
     (condition= (qroot 2 0) operation-undefined-error)
     (condition= (qroot 2 -1) operation-undefined-error)
@@ -237,9 +237,11 @@
     (condition= (qroot #q(27 m ^ 3 / s ^ 4) #q(3)) invalid-unit-operation-error)
 
     ;; Square root
-    (= (qsqrt 9) 3)
+    (qtest (qsqrt 9) :value 3 :error 0 :unit nil)
     (qtest (qsqrt #q(9 m ^ 2)) :value 3 :unit '((|m| 1)))
+    ;; Special cases
     (qtest (qsqrt #q(9 joule / kilogram)) :value 3 :unit '((|m| 1) (|s| -1)))
+    (qtest (qsqrt #q(1 au metre / second ^ 2)) :value (sqrt 149597870700) :unit '((|m| 1) (|s| -1)))
 
     ;; Exponentiation qexp, exponent: real
     (= (qexp -3) (exp -3))
