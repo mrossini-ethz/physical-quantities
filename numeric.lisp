@@ -43,6 +43,7 @@
   (let* ((n (/ (list-length var-derivative-pairs) 2))
          (gensyms (loop repeat n collect (gensym))))
     `(let (,@(loop for i below n for var = (nth (* i 2) var-derivative-pairs) collect `(,(nth i gensyms) (value ,var))))
+       (declare (ignorable ,@gensyms))
        (sqrt (+ ,@(loop
                      for i below n
                      for var = (nth (* i 2) var-derivative-pairs)
