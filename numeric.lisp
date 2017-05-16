@@ -38,23 +38,24 @@
      ,@body))
 
 (defmacro error-propagation (&rest var-derivative-pairs)
-  (unless (evenp (list-length var-derivative-pairs))
-    (error "Invalid error propagation argument list."))
-  (let* ((n (/ (list-length var-derivative-pairs) 2))
-         (gensyms (loop repeat n collect (gensym))))
-    `(let (,@(loop for i below n for var = (nth (* i 2) var-derivative-pairs) collect `(,(nth i gensyms) (value ,var))))
-       (declare (ignorable ,@gensyms))
-       (sqrt (+ ,@(loop
-                     for i below n
-                     for var = (nth (* i 2) var-derivative-pairs)
-                     for exp = (nth (1+ (* i 2)) var-derivative-pairs)
-                     collect `(expt (* (symbol-macrolet (,@(loop for j below n
-                                                              for var2 = (nth (* j 2) var-derivative-pairs)
-                                                              for gensym = (nth j gensyms)
-                                                              collect `(,var2 ,gensym)))
-                                         ,exp)
-                                       (aerr ,var))
-                                    2)))))))
+  ;; Get the number of arguments
+  (let ((n (list-length var-derivative-pairs)))
+    (unless (evenp n)
+      (error "Invalid error propagation argument list."))
+    ;; Put variables and derivative-expressions into separate lists
+    (destructuring-bind (variables expressions) (unzip var-derivative-pairs)
+      ;; Generate a gensym for each variable
+      (let ((gensyms (loop repeat (/ n 2) collect (gensym))))
+        ;; Assign the values of each variable to a gensym
+        `(let (,@(loop for var in variables for gensym in gensyms collect `(,gensym (value ,var))))
+           (declare (ignorable ,@gensyms))
+           ;; Loop over the variables and collect the error expression (assign a symbol-macro for each variable to avoid having to call (value ...) all the time)
+           ,(let ((parts (loop for var in variables for expr in expressions collect
+                              `(* (symbol-macrolet (,@(loop for var2 in variables for gensym in gensyms collect `(,var2 ,gensym))) ,expr) (aerr ,var)))))
+              ;; Compute final error
+              (if (> n 2)
+                  `(sqrt (+ ,@(loop for p in parts collect `(expt ,p 2))))
+                  `(abs ,@parts))))))))
 
 ;; Operations ------------------------------------------------------------------------
 

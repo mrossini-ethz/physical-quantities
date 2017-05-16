@@ -30,6 +30,12 @@
     ((zerop length) (consp list))
     (t (l> (rest list) (- length 1)))))
 
+(defun unzip (list)
+  (let ((n (list-length list)))
+    (unless (evenp n)
+      (error "Number of items in list must be even."))
+    (loop for i below (/ n 2) collect (nth (* 2 i) list) into a collect (nth (1+ (* 2 i)) list) into b finally (return (list a b)))))
+
 (defun have (item sequence &key (test #'eql) (key #'identity))
   ;; Checks whether the given item is in the list
   (some #'(lambda (x) (funcall test item (funcall key x))) sequence))
