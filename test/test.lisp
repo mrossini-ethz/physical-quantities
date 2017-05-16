@@ -341,15 +341,15 @@
 
     ;; Inverse hyperbolic functions
     ;; qasinh
-    (= (qasinh 1/2) (asinh 1/2))
+    (qtest (qasinh 1/2) :value (asinh 1/2) :error 0 :unit ())
     (qtest (qasinh #q(1/2 +/- 0.1)) :value (asinh 1/2) :unit ())
     (condition= (qasinh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qacosh
-    (= (qacosh 1/2) (acosh 1/2))
+    (qtest (qacosh 1/2) :value (acosh 1/2) :error 0 :unit ())
     (qtest (qacosh #q(1/2 +/- 0.1)) :value (acosh 1/2) :unit ())
     (condition= (qacosh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qatanh
-    (= (qatanh 1/2) (atanh 1/2))
+    (qtest (qatanh 1/2) :value (atanh 1/2) :error 0 :unit ())
     (qtest (qatanh #q(1/2 +/- 0.1)) :value (atanh 1/2) :unit ())
     (condition= (qatanh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
 
