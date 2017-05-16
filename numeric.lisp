@@ -250,11 +250,8 @@
   (make-quantity% :value (atanh (value number)) :error (error-propagation number (/ (- 1 (expt number 2))))))
 (export 'qatanh)
 
-(defgeneric qabs (number))
-(defmethod qabs ((number quantity))
-  (dup-quantity number :v (abs (value number))))
-(defmethod qabs ((number real))
-  (abs number))
+(defqop qabs (number)
+  (make-quantity% :value (abs (value number)) :error (error-direct number) :unit (unit number)))
 (export 'qabs)
 
 ;; Q-OP macros and functions --------------------------------------------------------

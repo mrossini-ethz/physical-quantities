@@ -354,7 +354,7 @@
     (condition= (qatanh #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Absolute value
-    (= (qabs -3) 3)
+    (qtest (qabs -3) :value 3 :error 0 :unit ())
     (qtest (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((|m| 1)))))
 
 (define-test interface-test ()
