@@ -327,15 +327,15 @@
 
     ;; Hyperbolic functions
     ;; qsinh
-    (= (qsinh 2) (sinh 2))
+    (qtest (qsinh 2) :value (sinh 2) :error 0 :unit ())
     (qtest (qsinh #q(2 +/- 0.1)) :value (sinh 2) :unit ())
     (condition= (qsinh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcosh
-    (= (qcosh 2) (cosh 2))
+    (qtest (qcosh 2) :value (cosh 2) :error 0 :unit ())
     (qtest (qcosh #q(2 +/- 0.1)) :value (cosh 2) :unit ())
     (condition= (qcosh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qtanh
-    (= (qtanh 2) (tanh 2))
+    (qtest (qtanh 2) :value (tanh 2) :error 0 :unit ())
     (qtest (qtanh #q(2 +/- 0.1)) :value (tanh 2) :unit ())
     (condition= (qtanh #q(2 +/- 0.1 m)) invalid-unit-operation-error)
 
