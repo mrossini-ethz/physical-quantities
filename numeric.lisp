@@ -273,25 +273,11 @@
 
 ;; Predicates/Tests -----------------------------------------------------------------
 
-(defgeneric qequal (x y) (:documentation "Determines whether two quantities are equal in value, error and unit."))
-(defmethod qequal ((x real) (y real))
-  (equal x y))
-(defmethod qequal ((x quantity) (y real))
-  (and (errorlessp x) (unitlessp x) (equal (value x) y)))
-(defmethod qequal ((x real) (y quantity))
-  (and (errorlessp y) (unitlessp y) (equal x (value y))))
-(defmethod qequal ((x quantity) (y quantity))
+(defqop qequal (x y)
   (and (equal (value x) (value y)) (equal (error-direct x) (error-direct y)) (units-equal (unit x) (unit y))))
 (export 'qequal)
 
-(defgeneric qequalp (x y) (:documentation "Determines whether two quantities are equalp in value, error and unit."))
-(defmethod qequalp ((x real) (y real))
-  (equalp x y))
-(defmethod qequalp ((x quantity) (y real))
-  (and (errorlessp x) (unitlessp x) (equalp (value x) y)))
-(defmethod qequalp ((x real) (y quantity))
-  (qequalp y x))
-(defmethod qequalp ((x quantity) (y quantity))
+(defqop qequalp (x y)
   (and (equalp (value x) (value y))
        (or (equalp (error-direct x) (error-direct y))
            (equalp (aerr x) (aerr y))
