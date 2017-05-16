@@ -313,15 +313,15 @@
 
     ;; Inverse trigonometric functions
     ;; qasin
-    (= (qasin 1/2) (asin 1/2))
+    (qtest (qasin 1/2) :value (asin 1/2) :error 0 :unit ())
     (qtest (qasin #q(1/2 +/- 0.1)) :value (asin 1/2) :unit ())
     (condition= (qasin #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qacos
-    (= (qacos 1/2) (acos 1/2))
+    (qtest (qacos 1/2) :value (acos 1/2) :error 0 :unit ())
     (qtest (qacos #q(1/2 +/- 0.1)) :value (acos 1/2) :unit ())
     (condition= (qacos #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qatan
-    (= (qatan 1/2) (atan 1/2))
+    (qtest (qatan 1/2) :value (atan 1/2) :error 0 :unit ())
     (qtest (qatan #q(1/2 +/- 0.1)) :value (atan 1/2) :unit ())
     (condition= (qatan #q(1/2 +/- 0.1 m)) invalid-unit-operation-error)
 
