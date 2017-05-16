@@ -299,15 +299,15 @@
 
     ;; Trigonometric functions
     ;; qsin
-    (= (qsin 2) (sin 2))
+    (qtest (qsin 2) :value (sin 2) :error 0 :unit ())
     (qtest (qsin #q(2 +/- 0.1)) :value (sin 2) :unit ())
     (condition= (qsin #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcos
-    (= (qcos 2) (cos 2))
+    (qtest (qcos 2) :value (cos 2) :error 0 :unit ())
     (qtest (qcos #q(2 +/- 0.1)) :value (cos 2) :unit ())
     (condition= (qcos #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qtan
-    (= (qtan 2) (tan 2))
+    (qtest (qtan 2) :value (tan 2) :error 0 :unit ())
     (qtest (qtan #q(2 +/- 0.1)) :value (tan 2) :unit ())
     (condition= (qtan #q(2 +/- 0.1 m)) invalid-unit-operation-error)
 
