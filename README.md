@@ -82,12 +82,31 @@ Units can be abbreviated. This means that `kilometre` is interpreted in the same
 Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved while within the `#q(...)` read macro, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. For the `(quantity ...)` macro, this is not possible, therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macro `(quantity ...)` does accept symbols, but they will be converted to uppercase by the reader (causing a unit lookup error) unless they are escaped by using the `|...|` syntax for example.
 
 ## Operations
-Common Lisp does not easily allow the redefinition/overloading of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `number` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
+Common Lisp does not easily allow the redefinition/overloading of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `real` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
 ```
 (q* a (q+ b (qsqrt c)))
 ```
+The result of such an operation is always a quantity, even if all arguments passed to the function are of type `real`.
 
 When using these operations, error propagation will be performed automatically.  The error propagation is first-order only and correlations are not taken into account.
+
+### Defining new operations
+Apart from the predefined operations, new options can be defined as normal functions or methods.
+See section [Accessing value, error and unit](#accessing-value-error-and-unit) for relevant information.
+
+There is a convenience macro `defqop` that automatically converts arguments to values of type `quantity` if a `real` number is passed:
+```
+(defqop factorial (number!u)
+  (unless (errorlessp number)
+    (error "The error propagation of FACTORIAL is undefined."))
+  ;; Insert more tests here ...
+  (make-quantity :value (loop for n from 1 upto (value number) for result = 1 then (* result n) finally (return result))))
+```
+The list of arguments (here only `number!u`) is not a lambda list and things like `&optional` or `&key` are not allowed.
+Furthermore, all arguments are expected to be either of type `real` or `quantity`.
+The ending `!u` in `number!u` means that the argument `number` should automatically be checked for unitlessness.
+Otherwise an error will be signaled.
+The suffix must only appear in the argument list.
 
 ## Converting units
 Units can be converted by calling the `(quantity ...)` or `#q(...)` macro and specifying `->` and a new unit:
