@@ -27,7 +27,8 @@
                       (f-error operation-undefined-error () "Operation  (~a ~{~a~^ ~}) is undefined if ~a is of type ~a." ',name ',lambda-list ',symbol (type-of ',symbol)))
                      ,@(when unitless
                          `(((has-unit-p ,symbol)
-                            (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)))))))
+                            (restart-case (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)
+                              (drop-unit () :report ,(format nil "Drop the unit from ~a." symbol) (setf ,symbol (make-quantity% :value (value ,symbol) :error (error-direct ,symbol)))))))))))
          ,@body))))
 (export 'defqop)
 
