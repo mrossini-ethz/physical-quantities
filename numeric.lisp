@@ -29,7 +29,7 @@
                          `(((has-unit-p ,symbol)
                             (restart-case (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)
                               (drop-unit () :report ,(format nil "Drop the unit from ~a." symbol) (setf ,symbol (make-quantity% :value (value ,symbol) :error (error-direct ,symbol)))))))))))
-         ,@body))))
+         (locally ,@body)))))
 (export 'defqop)
 
 ;; Error propagation macro -----------------------------------------------------------
