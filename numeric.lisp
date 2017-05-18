@@ -30,12 +30,25 @@
 ;; Operation definition macro --------------------------------------------------------
 
 (defmacro defqop (name arg-list &body body)
-  `(defun ,name ,arg-list
-     ,@(loop for arg in arg-list collect
-            `(cond
-               ((numberp ,arg) (setf ,arg (make-quantity :value ,arg)))
-               ((not (quantityp ,arg)) (f-error operation-undefined-error () "Operation  (~a ~{~a~^ ~} is undefined if ~a is of type ~a." ',name ',arg-list ',arg (type-of ',arg)))))
-     ,@body))
+  (flet ((decode-arg (arg)
+           (let* ((str (symbol-name arg)) (len (length str)))
+             (if (and (> len 2) (string-equal str "!u" :start1 (- len 2)))
+                 (values (intern (subseq str 0 (- len 2))) t)
+                 arg))))
+    (let ((lambda-list (mapcar #'decode-arg arg-list)))
+      `(defun ,name ,lambda-list
+         ,@(loop for arg in arg-list collect
+                (multiple-value-bind (symbol unitless) (decode-arg arg)
+                  `(cond
+                     ((numberp ,symbol)
+                      (setf ,symbol (make-quantity :value ,symbol)))
+                     ((not (quantityp ,symbol))
+                      (f-error operation-undefined-error () "Operation  (~a ~{~a~^ ~}) is undefined if ~a is of type ~a." ',name ',lambda-list ',symbol (type-of ',symbol)))
+                     ,@(when unitless
+                         `(((has-unit-p ,symbol)
+                            (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)))))))
+         ,@body))))
+(export 'defqop)
 
 (defmacro error-propagation (&rest var-derivative-pairs)
   ;; Get the number of arguments
@@ -104,9 +117,7 @@
 (export 'q/)
 
 ;; QPOW: Power function (integer exponent, real result)
-(defqop qpow (base power)
-  (unless (unitlessp power)
-    (f-error invalid-unit-operation-error () "POWER in operation (QPOW BASE POWER) must be unitless."))
+(defqop qpow (base power!u)
   (unless (errorlessp power)
     (f-error operation-undefined-error () "Operation (QPOW BASE POWER) undefined if POWER is quantity with uncertainty/error."))
   (unless (integerp (value power))
@@ -115,9 +126,7 @@
 (export 'qpow)
 
 ;; QROOT: Nth root (integer degree, real result)
-(defqop qroot (radicand degree)
-  (unless (unitlessp degree)
-    (f-error invalid-unit-operation-error () "DEGREE in operation (QROOT RADICAND DEGREE) must be unitless."))
+(defqop qroot (radicand degree!u)
   (unless (errorlessp degree)
     (f-error operation-undefined-error () "Operation (QROOT RADICAND DEGREE) is undefined if DEGREE is quantity with uncertainty/error."))
   (unless (plusp (value degree))
@@ -141,17 +150,13 @@
 (export 'qsqrt)
 
 ;; QEXP: Exponentiation, base e
-(defqop qexp (exponent)
-  (unless (unitlessp exponent)
-    (f-error invalid-unit-operation-error () "EXPONENT in the operation (QEXP EXPONENT) must be unitless."))
+(defqop qexp (exponent!u)
   (let ((val (exp (value exponent))))
     (make-quantity% :value val :error (abs (* val (aerr exponent))))))
 (export 'qexp)
 
 ;; Exponentiation, base given
-(defqop qexpt (base exponent)
-  (unless (unitlessp exponent)
-    (f-error invalid-unit-operation-error () "EXPONENT in the operation (QEXPT BASE EXPONENT) must be unitless."))
+(defqop qexpt (base exponent!u)
   (when (and (has-error-p exponent) (has-unit-p base))
     (f-error invalid-unit-operation-error () "BASE in operation (QEXPT BASE EXPONENT) must be unitless if EXPONENT is quantity with uncertainty/error."))
   (when (and (has-unit-p base) (floatp (value exponent)))
@@ -165,89 +170,59 @@
          (make-quantity% :value val :error (error-propagation base (if (zerop base) 0 (* exponent (expt base (1- exponent)))) exponent (if (zerop base) 0 (/ val (log base)))))))))
 (export 'qexpt)
 
-(defqop qln (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QLN NUMBER) must be unitless."))
+(defqop qln (number!u)
   (make-quantity% :value (log (value number)) :error (error-propagation number (/ number))))
 (export 'qln)
 
-(defqop qlog (number base)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QLOG NUMBER BASE) must be unitless."))
-  (unless (unitlessp base)
-    (f-error invalid-unit-operation-error () "BASE in operation (QLOG NUMBER BASE) must be unitless."))
+(defqop qlog (number!u base!u)
   (make-quantity% :value (log (value number) (value base)) :error (error-propagation number (/ 1 number (log base)) base (/ (log number) base (expt (log base) 2)))))
 (export 'qlog)
 
-(defqop qsin (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QSIN NUMBER) must be unitless."))
+(defqop qsin (number!u)
   (make-quantity% :value (sin (value number)) :error (error-propagation number (cos number))))
 (export 'qsin)
 
-(defqop qcos (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QCOS NUMBER) must be unitless."))
+(defqop qcos (number!u)
   (make-quantity% :value (cos (value number)) :error (error-propagation number (sin number))))
 (export 'qcos)
 
-(defqop qtan (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QTAN NUMBER) must be unitless."))
+(defqop qtan (number!u)
   (make-quantity% :value (tan (value number)) :error (error-propagation number (/ (expt (cos number) 2)))))
 (export 'qtan)
 
-(defqop qasin (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QASIN NUMBER) must be unitless."))
+(defqop qasin (number!u)
   (make-quantity% :value (asin (value number)) :error (error-propagation number (/ (sqrt (- 1 (expt number 2)))))))
 (export 'qasin)
 
-(defqop qacos (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QACOS NUMBER) must be unitless."))
+(defqop qacos (number!u)
   (make-quantity% :value (acos (value number)) :error (error-propagation number (/ -1 (sqrt (- 1 (expt number 2)))))))
 (export 'qacos)
 
-(defqop qatan (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QATAN NUMBER) must be unitless."))
+(defqop qatan (number!u)
   (make-quantity% :value (atan (value number)) :error (error-propagation number (/ (1+ (expt number 2))))))
 (export 'qatan)
 
-(defqop qsinh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QSINH NUMBER) must be unitless."))
+(defqop qsinh (number!u)
   (make-quantity% :value (sinh (value number)) :error (error-propagation number (cosh number))))
 (export 'qsinh)
 
-(defqop qcosh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QCOSH NUMBER) must be unitless."))
+(defqop qcosh (number!u)
   (make-quantity% :value (cosh (value number)) :error (error-propagation number (sinh number))))
 (export 'qcosh)
 
-(defqop qtanh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QTANH NUMBER) must be unitless."))
+(defqop qtanh (number!u)
   (make-quantity% :value (tanh (value number)) :error (error-propagation number (/ (expt (cosh number) 2)))))
 (export 'qtanh)
 
-(defqop qasinh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QASINH NUMBER) must be unitless."))
+(defqop qasinh (number!u)
   (make-quantity% :value (asinh (value number)) :error (error-propagation number (/ (sqrt (1+ (expt number 2)))))))
 (export 'qasinh)
 
-(defqop qacosh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QACOSH NUMBER) must be unitless."))
+(defqop qacosh (number!u)
   (make-quantity% :value (acosh (value number)) :error (error-propagation number (/ 1 (sqrt (1+ number)) (sqrt (1- number))))))
 (export 'qacosh)
 
-(defqop qatanh (number)
-  (unless (unitlessp number)
-    (f-error invalid-unit-operation-error () "NUMBER in operation (QATANH NUMBER) must be unitless."))
+(defqop qatanh (number!u)
   (make-quantity% :value (atanh (value number)) :error (error-propagation number (/ (- 1 (expt number 2))))))
 (export 'qatanh)
 
