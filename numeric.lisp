@@ -2,30 +2,11 @@
 
 ;; Helper functions -----------------------------------------------------------------
 
-(defun add-errors (&rest errors)
-  (let ((sum (loop for err in errors sum (expt err 2))))
-    (if (plusp sum) (sqrt sum) 0)))
-
-(defun add-aerr (&rest quantities)
-  (apply #'add-errors (loop for q in quantities collect (absolute-error q))))
-(defun add-rerr (&rest quantities)
-  (- (apply #'add-errors (loop for q in quantities collect (relative-error q)))))
-
 (defmacro dup-quantity (q &key v e u)
   `(make-quantity%
     :value ,(if (or (null v) (eql q v)) `(value ,q) v)
     :error ,(if (or (null e) (eql q e)) `(error-direct ,q) e)
     :unit ,(if (or (null u) (eql q u)) `(copy-tree (unit ,q)) u)))
-
-(defmacro with-quantity-slots ((quantity val err) &body body)
-  (with-gensyms (quant)
-    `(let* ((,quant ,quantity) (,val (value ,quant)) (,err (aerr ,quant)))
-       ,@body)))
-
-;; Wrapper functions -----------------------------------------------------------------
-
-(defun copy-quantity (q)
-  `(dup-quantity ,q))
 
 ;; Operation definition macro --------------------------------------------------------
 
@@ -49,6 +30,8 @@
                             (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)))))))
          ,@body))))
 (export 'defqop)
+
+;; Error propagation macro -----------------------------------------------------------
 
 (defmacro error-propagation (&rest var-derivative-pairs)
   ;; Get the number of arguments
@@ -229,23 +212,6 @@
 (defqop qabs (number)
   (make-quantity% :value (abs (value number)) :error (error-direct number) :unit (unit number)))
 (export 'qabs)
-
-;; Q-OP macros and functions --------------------------------------------------------
-
-(defun q-op-insert (tree)
-  ;; Very simple code walker that replaces numeric operations like + with q+ etc.
-  (let ((tree (macroexpand tree)))
-    (macrolet ((qcase ((form) &rest symbols) `(case ,form ,@(loop for s in symbols collect `(,s ',(symb "Q" s))) (t ,form))))
-      `(,@(loop for leaf in tree
-             for n upfrom 0 collect
-               (cond
-                 ((listp leaf) (q-op-insert leaf))
-                 ((zerop n) (qcase (leaf) + - * / exp expt log sqrt sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh))
-                 (t leaf)))))))
-
-(defmacro qop (qform)
-  (funcall #'q-op-insert qform))
-(export 'qop)
 
 ;; Predicates/Tests -----------------------------------------------------------------
 
@@ -453,3 +419,20 @@
        (t (setf digits 1)))))
   (values (dup-quantity quantity :v (round-to (value quantity) digits place) :e (round-to (aerr quantity) digits place)) digits place))
 (export 'qround)
+
+;; Q-OP macros and functions --------------------------------------------------------
+
+(defun q-op-insert (tree)
+  ;; Very simple code walker that replaces numeric operations like + with q+ etc.
+  (let ((tree (macroexpand tree)))
+    (macrolet ((qcase ((form) &rest symbols) `(case ,form ,@(loop for s in symbols collect `(,s ',(symb "Q" s))) (t ,form))))
+      `(,@(loop for leaf in tree
+             for n upfrom 0 collect
+               (cond
+                 ((listp leaf) (q-op-insert leaf))
+                 ((zerop n) (qcase (leaf) + - * / exp expt log sqrt sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh))
+                 (t leaf)))))))
+
+(defmacro qop (qform)
+  (funcall #'q-op-insert qform))
+(export 'qop)
