@@ -7,8 +7,13 @@
 (export '(quantity value unit))
 
 (defmethod print-object ((obj quantity) stream)
-  (print-unreadable-object (obj stream :type t)
-    (format stream "VALUE: ~a, ERROR: ~a, UNIT: ~a" (value obj) (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj)) (str-unit (unit obj)))))
+  (print-unreadable-object (obj stream :type t :identity t)
+    (format stream "~a~:[ +/- ~a~;~*~]~:[~*~; ~a~]"
+            (value obj)
+            (zerop (error-direct obj))
+            (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj))
+            (has-unit-p obj)
+            (str-unit (unit obj)))))
 
 ;; Error functions
 (defun ae (val err)
