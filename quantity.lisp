@@ -86,3 +86,12 @@
 ;; #q(<q> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) (unit-a (eql nil)) unit-b)
   (convert-unit% q (dereference-unit unit-b)))
+
+(defmacro quantity (&rest expr)
+  "Function to define quantities without the reader macro."
+  (let ((result (parseq 'quantity expr)))
+    (unless result
+      (f-error quantity-definition-syntax-error () "Syntax error in quantity definition ~{~a~^ ~}." expr))
+    (destructuring-bind ((val err) unit-a unit-b) result
+      `(eval-quantity ,val ,err (list ,@unit-a) (list ,@unit-b)))))
+(export 'quantity)
