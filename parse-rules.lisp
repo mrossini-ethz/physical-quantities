@@ -10,6 +10,7 @@
 (defrule conversion () (and '-> (+ unit-factor))
   (:destructure (arrow unit-factors) (declare (ignore arrow)) unit-factors))
 (defrule unit () (* unit-factor))
+;; form [{+/-|+-} form [%]] {[{/|per}] symbol [{^|**|to the} form]}* [-> {[{/|per}] symbol [{^|**|to the} form]}+]
 (defrule quantity () (and errval unit (? conversion)))
 (defrule unit-definition () (and form unit)
   (:destructure (conv unit-factors) `(,conv (list ,@unit-factors))))
