@@ -6,7 +6,7 @@ This lisp library handles physical quantities which consist of
  * Uncertainty/Error
  * Unit
 
-where the type of the value can be any subtype of `real`. For the uncertainty, both absolute and relative values are possible. Combinations of lisp symbols are used to describe units. Unit abbreviations and prefixes as well as user defined units are supported. Error propagation and unit checking is performed when doing calculations.
+where the type of the value can be any subtype of `real`. For the uncertainty, both absolute and relative values are possible. Combinations of lisp symbols or strings are used to describe units. User defined units including abbreviations and prefixes are supported. Error propagation and unit checking is performed for all defined operations.
 
 ## Example usage
 The following example illustrates the use of the library:
@@ -15,34 +15,35 @@ The following example illustrates the use of the library:
 (asdf:load-system :physical-quantities)
 (use-package :physical-quantities}
 (define-si-units)
-(define-read-macro)
+(define-read-macros)
 
-(let (m c E)
+(let (m c m)
   ;; Define the mass
   (setf m #q(1.00 +/- 0.01 kg))
   ;; The speed of light
   (setf c #q(299792458 m / s))
-  ;; E = m * c^2
-  (setf E (q* m (qpow c 2)))
-  ;; Print E, converted to petajoule
-  (print #q(E -> PJ)))
+  ;; e = m * c^2
+  (setf e (q* m (qpow c 2)))
+  ;; Print e, converted to petajoule
+  (print #q(e -> PJ)))
 ```
 This will print
 ```
-#<QUANTITY VALUE: 89.87552, ERROR: 1.0 %, UNIT: petajoule>
+#<QUANTITY 89.87552 +/- 1.0 % petajoule {...}>
 ```
 ## Defining quantities
-To define a quantity, either the macro `(quantity ...)` or the read macro `#q(...)` can be used. For the latter, the function `(define-read-macro)` must be called first.
+To define a quantity, either the macro `(quantity ...)` or the read macro `#q(...)` can be used. For the latter, the function `(define-read-macros)` must be called first.
 
 The following lines of code are equivalent:
 ```
 (quantity 1 "kilogram")
+(quantity 1 "kg")
 
-(define-read-macro)
+(define-read-macros)
 #q(1 kilogram)
 #q(1 kg)
 ```
-This creates an object of type `quantity`. Its value is the integer `1` and its unit is `kilogram`. The uncertainty/error of this quantity is zero because it was not specified. To do this, the symbol `+/-` (or `+-`), followed by a number, can be inserted into the macro call after the value:
+This creates an object of type `quantity`. Its value is the integer `1` and its unit is `kilogram`. The uncertainty/error of this quantity is zero because it was not specified. To define it, the symbol `+/-` (or `+-`), followed by a number, can be inserted into the macro call after the value:
 ```
 #q(1 +/- 0.2 kg)
 ```
@@ -53,8 +54,6 @@ This sets the absolute error to 0.2 kg. To define a relative error, the `%` sign
 Note that there must be space between numbers and symbols.
 
 It is permitted to use variables or even lisp forms instead of numbers for both the value/magnitude or the uncertainty/error.
-Note that the `#q(...)` read macro preserves the case of symbols rather than converting them to uppercase.
-This means that when using symbols within the forms for value/magnitude or uncertainty/error they have to be typed in uppercase.
 
 ### Specifying units
 Units are specified as a sequence of unit factors. A unit factor is essentially a unit and a power. The power defaults to 1 when only naming the unit (e.g. `metre`). If a power of -1 is desired, either the symbol `/` or `per` can be inserted before the unit (e.g `/ metre` or `per metre`). Powers other than 1 or -1 are specified in any of the following ways:
@@ -76,10 +75,27 @@ kg m ^ 2 / s ^ 2 / K / mol
 Please note that separating symbols with spaces is compulsory.
 
 ### Unit abbreviations
-Units can be abbreviated. This means that `kilometre` is interpreted in the same way as `km`. Note that both the unit `metre` and the prefix `kilo` is abbreviated. Mixing abbreviation (e.g. `kmetre` or `kilom`) is forbidden.
+Units can be abbreviated. This means that `kilometre` is interpreted in the same way as `km`. Note that both the unit `metre` and the prefix `kilo` is abbreviated. Mixing abbreviation (e.g. `kmetre` or `kilom`) is not supported.
+
+### Standalone units
+Units without value can be obtained by using one of these methods:
+```
+(mkunit "metre" / "second")
+(mkunit "m" / "s")
+#u(metre / second)
+#u(m / s)
+```
+These will all create the same unit. Note that the representation of the result may change in the future.
 
 ### Upper- and lowercase
-Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved while within the `#q(...)` read macro, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. For the `(quantity ...)` macro, this is not possible, therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macro `(quantity ...)` does accept symbols, but they will be converted to uppercase by the reader (causing a unit lookup error) unless they are escaped by using the `|...|` syntax for example.
+Lisp by default converts all symbols that it reads to uppercase. This default setting is disabled and case is preserved for units within the `#q(...)` and `#u(...)` read macros, therefore `#q(1 Pa)` has different units from `#q(1 pA)`. When using the `(quantity ...)` or `(mkunit ...)` macros, this is not possible and therefore you would have to specify `(quantity 1 "Pa")` or `(quantity 1 "pA")`. The macros `(quantity ...)` and `(mkunit ...)` *do* accept symbols, but these will be converted to uppercase by the reader (usually causing a unit lookup error) unless they are escaped by using the `|...|` syntax for example.
+
+Note that the `#q(...)` read macro makes the usual case conversion for the value/magnitude and uncertainty/error. Therefore, it is possible to write
+```
+(let ((val 1.0) (err 0.1))
+  #q(val +/- err m / s))
+```
+which will result in `#<QUANTITY 1.0 +/- 0.1 metre / second {...}>`. The symbols are converted to uppercase in the `let` form as well as in the `#q(...)` read macro.
 
 ## Operations
 Common Lisp does not easily allow the redefinition/overloading of standard operators such as `+` or `*`. For this reason, a number of operators are provided to work with both types `real` and `quantity`. These are prefixed with the letter `q`, e.g. `q+` or `q*`. Example:
@@ -112,18 +128,18 @@ The suffix must only appear in the argument list.
 Units can be converted by calling the `(quantity ...)` or `#q(...)` macro and specifying `->` and a new unit:
 ```
 (let ((v #q(20 m / s)))
-  (setf v #q(V -> km / h))
+  (setf v #q(v -> km / h))
   (print v))
 ```
 This would print
 ```
-#<QUANTITY VALUE: 72, ERROR: 0, UNIT: kilometre / hour>
+#<QUANTITY 72 kilometre / hour {...}>
 ```
 Instead of using a variable as the first form in the macro call, one could specify any other form such as
 ```
-#q((Q* 1/2 m (QPOW V 2)) -> joule)
+#q((q* 1/2 m (qpow v 2)) -> joule)
 ```
-(note the uppercase symbols in the `#q(...)` form) or even a quantity definition
+or even a quantity definition
 ```
 #q(20 +/- 1 % m / s -> km / h)
 ```
@@ -231,8 +247,8 @@ Instead, the most specific error is signaled.
 Here is the complete hierarcy of conditions:
 
 * `quantity-definition-error`
-  * `quantity-definition-syntax-error`: There is a syntax error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `(make-unit ...)` or `(mkunit ...)`.
-  * `quantity-definition-semantic-error`: There is a semantic error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `(make-unit ...)` or `(mkunit ...)`.
+  * `quantity-definition-syntax-error`: There is a syntax error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `#u(...)`, `(make-unit ...)` or `(mkunit ...)`.
+  * `quantity-definition-semantic-error`: There is a semantic error in one of the following forms: `#q(...)`, `(quantity ...)`, `(make-quantity ...)`, `#u(...)`, `(make-unit ...)` or `(mkunit ...)`.
 
 * `invalid-unit-error`
   * `invalid-unit-operation-error`: The mathematical operation can not be performed on the input quantity with the given unit.
