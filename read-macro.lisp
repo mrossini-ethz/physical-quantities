@@ -43,7 +43,18 @@
     ;; Expand the list into a macro call
     `(quantity ,@(nreverse items))))
 
-(defun define-read-macro ()
-  "Lets the user define the #q(...) read macro."
-  (set-dispatch-macro-character #\# #\q #'read-quantity))
-(export 'define-read-macro)
+(defun read-unit (stream char1 char2)
+  "The read macro #u(...) is an abbreviation for (mkunit ...) which does not transform lowercase symbols to uppercase."
+  (declare (ignore char1 char2))
+  `(mkunit ,@(let ((*readtable* (copy-readtable *readtable*)))
+               ;; Change the readtable such that case is preserved
+               (setf (readtable-case *readtable*) :preserve)
+               (read stream t nil t))))
+
+(defun define-read-macros (&key (quantity #\q) (unit #\u))
+  "Lets the user define the #q(...) and #u(...) read macros."
+  (when quantity
+    (set-dispatch-macro-character #\# quantity #'read-quantity))
+  (when unit
+    (set-dispatch-macro-character #\# unit #'read-unit)))
+(export 'define-read-macros)

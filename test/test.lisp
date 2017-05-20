@@ -1,7 +1,7 @@
 (in-package :pq)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (define-read-macro))
+  (define-read-macros))
 
 (define-si-units)
 
