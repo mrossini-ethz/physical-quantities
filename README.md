@@ -67,6 +67,18 @@ metre to the 2
 ```
 Note that `/ metre` is equivalent to `metre ^ -1`.
 
+For the powers 2 and 3, there are special keywords:
+```
+square metre
+cubic metre
+metre squared
+metre cubed
+/ square metre
+/ cubic metre
+/ metre squared
+/ metre cubed
+```
+
 As pointed out above, the full unit is a sequence of such unit factors:
 ```
 kilogram metre ^ 2 / second ^ 2 / kelvin / mole
