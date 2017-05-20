@@ -14,6 +14,7 @@
   (check
     ;; Value only
     (qtest #q(1) :value 1 :error 0 :unit ())
+    (qtest #q(#q(2 +/- 0.1 metre)) :value 2 :error 0.1 :unit '((|m| 1)))
     ;; Value and absolute error
     (qtest #q(1 +/- 0.1)  :value 1 :error 0.1 :unit ())
     ;; Value and relative error

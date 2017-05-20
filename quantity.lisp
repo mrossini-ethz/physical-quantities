@@ -79,7 +79,7 @@
   (make-quantity% :value (convert-unit% value unit-a unit-b) :error (if (minusp error) error (convert-unit% error unit-a unit-b)) :unit (dereference-unit unit-b)))
 ;; #q(<q>)
 (defmethod eval-quantity ((value quantity) (error (eql 0)) (unit-a (eql nil)) (unit-b (eql nil)))
-  (value value))
+  value)
 ;; #q(<q> -> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) unit-a (unit-b (eql nil)))
   (convert-unit% q (dereference-unit unit-a)))
