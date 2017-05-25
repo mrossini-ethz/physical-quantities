@@ -5,9 +5,16 @@
 
 (define-si-units)
 
+(defun float= (a b)
+  (let ((delta (abs (- b a))))
+    (typecase delta
+      (double-float (< delta double-float-epsilon))
+      (single-float (< delta single-float-epsilon))
+      (t (= a b)))))
+
 (defun qtest (quantity &key (value 0 value-supplied-p) (error 0 error-supplied-p) (unit () unit-supplied-p))
   (and (or (not value-supplied-p) (= (value quantity) value))
-       (or (not error-supplied-p) (= (error-direct quantity) error))
+       (or (not error-supplied-p) (float= (error-direct quantity) error))
        (or (not unit-supplied-p) (units-equal (unit quantity) (if (unitp unit) unit (apply #'make-unit unit))))))
 
 (define-test definition-test ()
@@ -366,6 +373,18 @@
     (qtest (qabs -3) :value 3 :error 0 :unit ())
     (qtest (qabs #q(-3 +/- 5 m)) :value 3 :error 5 :unit '((|m| 1)))))
 
+(define-test error-propagation-test ()
+  (check
+    ;; Q+
+    (qtest (q+ #q(1 +/- 0.3) #q(-2 +/- 0.5) #q(3 +/- 0.7)) :value 2 :error (py+ 0.3 0.5 0.7) :unit ())
+    ;; Q-
+    (qtest (q- #q(1 +/- 0.3) #q(-2 +/- 0.5) #q(3 +/- 0.7)) :value 0 :error (py+ 0.3 0.5 0.7) :unit ())
+    ;; Q*
+    (qtest (q* #q(2 +/- 0.1) #q(-6 +/- 0.2) #q(8 +/- 0.2)) :value -96 :error (* 96 (py+ 0.05 2/60 0.025)) :unit ())
+    ;; Q/
+    (qtest (q/ #q(2 +/- 0.1) #q(-6 +/- 0.2) #q(8 +/- 0.2)) :value -2/48 :error (* 2/48 (py+ 0.05 2/60 0.025)) :unit ())
+))
+
 (define-test interface-test ()
   (check
     ;; make-quantity
@@ -584,6 +603,7 @@
     (definition-test)
     (conversion-test)
     (operations-test)
+    (error-propagation-test)
     (predicate-test)
     (interface-test)
     (namespace-test)))

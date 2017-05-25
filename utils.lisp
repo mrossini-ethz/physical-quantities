@@ -66,6 +66,10 @@
 
 ;; Math Utilities =====================================================
 
+(defun py+ (&rest numbers)
+  "Pythagorean addition"
+  (sqrt (coerce (apply #'+ (mapcar (lambda (x) (* x x)) numbers)) 'double-float)))
+
 ;; Error function -----------------------------------------------------
 
 (defun erf (x)
