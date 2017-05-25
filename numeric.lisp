@@ -16,20 +16,34 @@
              (if (and (> len 2) (string-equal str "!u" :start1 (- len 2)))
                  (values (intern (subseq str 0 (- len 2))) t)
                  arg))))
-    (let ((lambda-list (mapcar #'decode-arg arg-list)))
-      `(defun ,name ,lambda-list
-         ,@(loop for arg in arg-list collect
-                (multiple-value-bind (symbol unitless) (decode-arg arg)
-                  `(cond
-                     ((numberp ,symbol)
-                      (setf ,symbol (make-quantity :value ,symbol)))
-                     ((not (quantityp ,symbol))
-                      (f-error operation-undefined-error () "Operation  (~a ~{~a~^ ~}) is undefined if ~a is of type ~a." ',name ',lambda-list ',symbol (type-of ',symbol)))
-                     ,@(when unitless
-                         `(((has-unit-p ,symbol)
-                            (restart-case (f-error invalid-unit-operation-error () "~a in operation (~a ~{~a~^ ~}) must be unitless." ',symbol ',name ',lambda-list)
-                              (drop-unit () :report ,(format nil "Drop the unit from ~a." symbol) (setf ,symbol (make-quantity% :value (value ,symbol) :error (error-direct ,symbol)))))))))))
-         (locally ,@body)))))
+    (let ((lambda-list (mapcar #'decode-arg arg-list))
+          (rest-var (if (position '&rest arg-list) (nth (1+ (position '&rest arg-list)) arg-list))))
+      (flet ((convert-arg (arg unitless)
+               ;; FIXME: Error message for &rest type arguments is bad
+               `(cond
+                  ((realp ,arg) (setf ,arg (make-quantity :value ,arg)))
+                  ((not (quantityp ,arg)) (f-error operation-undefined-error ()
+                                                   "Operation (~a ~{~a~^ ~}) is undefined if ~a is of type ~a."
+                                                   ',name ',lambda-list ',arg (type-of ',arg)))
+                  ,@(when unitless
+                          `(((has-unit-p ,arg)
+                             (restart-case (f-error invalid-unit-operation-error ()
+                                                    "~a in operation (~a ~{~a~^ ~}) must be unitless."
+                                                    ',arg ',name ',lambda-list)
+                               (drop-unit ()
+                                 :report ,(format nil "Drop the unit from ~a." arg)
+                                 (setf ,arg (make-quantity% :value (value ,arg) :error (error-direct ,arg)))))))))))
+        (with-gensyms (var)
+          `(defun ,name ,lambda-list
+             ;; Convert the compulsory arguments in the lambda list
+             ,@(loop for arg in arg-list until (eql arg '&rest) collect
+                    (multiple-value-bind (symbol unitless) (decode-arg arg)
+                      (convert-arg symbol unitless)))
+             ;; Convert the (optional) &rest arguments in the lambda list
+             ,(when rest-var
+                    (multiple-value-bind (symbol unitless) (decode-arg rest-var)
+                      `(loop for ,var below (list-length ,symbol) do ,(convert-arg `(nth ,var ,symbol) unitless))))
+             (locally ,@body)))))))
 (export 'defqop)
 
 ;; Error propagation macro -----------------------------------------------------------
