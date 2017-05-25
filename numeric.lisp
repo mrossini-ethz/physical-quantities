@@ -232,7 +232,7 @@
 (export 'qatanh)
 
 (defqop qabs (number)
-  (make-quantity% :value (abs (value number)) :error (error-direct number) :unit (unit number)))
+  (make-quantity% :value (abs (value number)) :error (error-direct number) :unit (copy-unit (unit number))))
 (export 'qabs)
 
 ;; Predicates/Tests -----------------------------------------------------------------

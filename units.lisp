@@ -17,6 +17,9 @@
          (t (f-error quantity-definition-syntax-error () "UNIT-FACTORS in (MAKE-UNIT &rest UNIT-FACTORS) must be lists of two elements: (LIST <SYMBOL> <INTEGER>).")))))
 (export 'make-unit)
 
+(defun copy-unit (unit)
+  (loop for uf in unit collect (make-uf (uf-unit uf) (uf-power uf))))
+
 (defun unitp (object)
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
