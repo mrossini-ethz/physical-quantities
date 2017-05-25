@@ -107,7 +107,7 @@
 
     ;; Subtraction, one arg
     (qtest (q- 3) :value -3 :error 0 :unit nil)
-    (qtest (q- #q(3 +/- 0.2 m)) :value -3 :error 0.2 :unit '((|m| 1)))
+    (qtest (q- #q(3 +/- 0.2d0 m)) :value -3 :error 0.2d0 :unit '((|m| 1)))
     ;; Subtraction, real numbers
     (qtest (q- 2 -3) :value 5 :error 0 :unit nil)
     ;; Subtraction, a: quantity, b: real
@@ -129,9 +129,9 @@
     ;; Multiplication, a: real, b: real
     (qtest (q* 2 -3) :value -6 :error 0 :unit nil)
     ;; Multiplication, a: real, b: quantity
-    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6 :error 0.2 :unit '((|m| 1)))
+    (qtest (q* 2 #q(-3 +/- 1/10 m)) :value -6d0 :error 0.2d0 :unit '((|m| 1)))
     ;; Multiplication, a: quantity, b: real
-    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6 :error 0.3 :unit '((|m| 1)))
+    (qtest (q* #q(2 +/- 1/10 m) -3) :value -6d0 :error 0.3d0 :unit '((|m| 1)))
     ;; Multiplication with unitless number
     (qtest (q* #q(1 m) 2) :value 2 :error 0 :unit '((|m| 1)))
     (qtest (q* 2 #q(1 m)) :value 2 :error 0 :unit '((|m| 1)))
@@ -151,11 +151,11 @@
     ;; Division, a: real, b: real
     (qtest (q/ 2 -3) :value -2/3 :error 0 :unit nil)
     ;; Division, a: quantity, b: real
-    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 0.1 :unit '((|m| 1)))
-    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error 0.05 :unit '((|m| 1)))
+    (qtest (q/ #q(1 +/- 2/10 m) 2) :value 1/2 :error 0.1d0 :unit '((|m| 1)))
+    (qtest (q/ #q(1 +/- 10 % m) 2) :value 1/2 :error 0.05d0 :unit '((|m| 1)))
     ;; Division, a: real, b: quantity
     (qtest (q/ 2 #q(1 +/- 1/10 m)) :value 2 :unit '((|m| -1)))
-    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error 0.2 :unit '((|m| -1)))
+    (qtest (q/ 2 #q(1 +/- 10 % m)) :value 2 :error 0.2d0 :unit '((|m| -1)))
     ;; Division, exactly same units
     (qtest (q/ #q(1 m) #q(1 m)) :value 1 :error 0 :unit '())
     ;; Division, same units, different prefixes
@@ -380,9 +380,9 @@
     ;; Q-
     (qtest (q- #q(1 +/- 0.3) #q(-2 +/- 0.5) #q(3 +/- 0.7)) :value 0 :error (py+ 0.3 0.5 0.7) :unit ())
     ;; Q*
-    (qtest (q* #q(2 +/- 0.1) #q(-6 +/- 0.2) #q(8 +/- 0.2)) :value -96 :error (* 96 (py+ 0.05 2/60 0.025)) :unit ())
+    (qtest (q* #q(2 +/- 0.1d0) #q(-6 +/- 0.2d0) #q(8 +/- 0.2d0)) :value -96 :error (* 96 (py+ 0.05d0 2/60 0.025d0)) :unit ())
     ;; Q/
-    (qtest (q/ #q(2 +/- 0.1) #q(-6 +/- 0.2) #q(8 +/- 0.2)) :value -2/48 :error (* 2/48 (py+ 0.05 2/60 0.025)) :unit ())
+    (qtest (q/ #q(2 +/- 0.1d0) #q(-6 +/- 0.2d0) #q(8 +/- 0.2d0)) :value -2/48 :error (* 2/48 (py+ 0.05d0 2/60 0.025d0)) :unit ())
 ))
 
 (define-test interface-test ()
