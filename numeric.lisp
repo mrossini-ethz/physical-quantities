@@ -71,47 +71,42 @@
 ;; Operations ------------------------------------------------------------------------
 
 ;; Q+
-(defqop binary+ (a b)
-  (let ((b (convert-unit% b (unit a))))
-    (make-quantity% :value (+ (value a) (value b)) :error (error-propagation a 1 b 1) :unit (unit a))))
-(defun q+ (&rest quantities)
-  (cond
-    ((null quantities) (make-quantity% :value 0))
-    ((l= quantities 1) (if (quantityp (first quantities)) (first quantities) (make-quantity% :value (first quantities))))
-    (t (reduce #'binary+ quantities))))
+(defqop q+ (&rest numbers)
+  (if numbers
+      (let ((converted-numbers (append (list (first numbers))
+                                       (loop for n in (rest numbers) collect
+                                            (convert-unit% n (unit (first numbers)))))))
+        (make-quantity% :value (apply #'+ (mapcar #'value converted-numbers))
+                        :error (apply #'py+ (mapcar #'aerr converted-numbers))
+                        :unit (copy-unit (unit (first converted-numbers)))))
+      (make-quantity%)))
 (export 'q+)
 
 ;; Q-
-(defqop unary- (a)
-  (dup-quantity a :v (- (value a))))
-(defqop binary- (a b)
-  (let ((b (convert-unit% b (unit a))))
-    (make-quantity% :value (- (value a) (value b)) :error (error-propagation a 1 b 1) :unit (unit a))))
-(defun q- (number &rest more-numbers)
-  (cond
-    ((null more-numbers) (unary- number))
-    (t (binary- number (apply #'q+ more-numbers)))))
+(defqop q- (number &rest more-numbers)
+  (let ((converted-numbers (append (list number)
+                                   (loop for n in more-numbers collect (convert-unit% n (unit number))))))
+    (make-quantity% :value (apply #'- (mapcar #'value converted-numbers))
+                    :error (apply #'py+ (mapcar #'aerr converted-numbers))
+                    :unit (copy-unit (unit (first converted-numbers))))))
 (export 'q-)
 
 ;; Q*
-(defqop binary* (a b)
-  (make-quantity% :value (* (value a) (value b)) :error (error-propagation a b b a) :unit (multiply-units (unit a) (unit b))))
-(defun q* (&rest numbers)
-  (cond
-    ((null numbers) (make-quantity% :value 1))
-    ((l= numbers 1) (if (quantityp (first numbers)) (dup-quantity (first numbers)) (make-quantity% :value (car numbers))))
-    (t (reduce #'binary* numbers))))
+(defqop q* (&rest numbers)
+  (if numbers
+      (let ((value (apply #'* (mapcar #'value numbers))))
+        (make-quantity% :value value
+                        :error (if (zerop value) 0 (* (abs value) (apply #'py+ (mapcar #'rerr numbers))))
+                        :unit (apply #'multiply-units (mapcar #'unit numbers))))
+      (make-quantity% :value 1)))
 (export 'q*)
 
 ;; Q/
-(defqop unary/ (a)
-  (make-quantity% :value (/ (value a)) :error (error-propagation a (expt a -2)) :unit (power-unit (unit a) -1)))
-(defqop binary/ (a b)
-  (make-quantity% :value (/ (value a) (value b)) :error (error-propagation a (/ b) b (/ a b b)) :unit (divide-units (unit a) (unit b))))
-(defun q/ (number &rest more-numbers)
-  (cond
-    ((null more-numbers) (unary/ number))
-    (t (binary/ number (apply #'q* more-numbers)))))
+(defqop q/ (number &rest more-numbers)
+  (let ((value (apply #'/ (value number) (mapcar #'value more-numbers))))
+    (make-quantity% :value value
+                    :error (if (zerop value) 0 (* (abs value) (apply #'py+ (rerr number) (mapcar #'rerr more-numbers))))
+                    :unit (apply #'divide-units (unit number) (mapcar #'unit more-numbers)))))
 (export 'q/)
 
 ;; QPOW: Power function (integer exponent, real result)
