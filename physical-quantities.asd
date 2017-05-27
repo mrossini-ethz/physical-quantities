@@ -6,17 +6,18 @@
   :author "Marco Rossini"
   :license "GPLv2"
   :depends-on ("parseq")
+  :serial t
   :components ((:file "package")
+               (:file "utils")
                (:file "conditions")
-               (:file "utils" :depends-on ("package"))
-               (:file "parse-rules" :depends-on ("package"))
-               (:file "unit-factor" :depends-on ("package"))
-               (:file "quantity" :depends-on ("package"))
-               (:file "unit-database" :depends-on ("package" "utils" "unit-factor"))
-               (:file "units" :depends-on ("package" "utils" "quantity" "unit-factor" "unit-database"))
-               (:file "numeric" :depends-on ("package" "utils" "quantity" "units" "conditions"))
-               (:file "read-macro" :depends-on ("package" "utils" "quantity" "units"))
-               (:file "si-units" :depends-on ("package" "unit-database" "read-macro" "parse-rules")))
+               (:file "quantity")
+               (:file "unit-factor")
+               (:file "unit-database")
+               (:file "units")
+               (:file "parse-rules")
+               (:file "read-macro")
+               (:file "numeric")
+               (:file "si-units"))
   :in-order-to ((test-op (test-op :physical-quantities-test))))
 
 (defsystem "physical-quantities-test"
@@ -24,8 +25,9 @@
   :author "Marco Rossini"
   :license "GPLv2"
   :depends-on (:physical-quantities)
+  :serial t
   :components ((:file "test/test-framework")
-               (:file "test/test" :depends-on ("test/test-framework"))))
+               (:file "test/test")))
 
 (defmethod perform ((operation test-op) (system (eql (find-system :physical-quantities-test))))
   (funcall (intern "PHYSICAL-QUANTITIES-TEST" :physical-quantities)))
