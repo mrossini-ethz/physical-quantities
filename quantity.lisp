@@ -7,6 +7,7 @@
 (export '(quantity value unit))
 
 (defmethod print-object ((obj quantity) stream)
+  (declare (notinline has-unit-p))
   (print-unreadable-object (obj stream :type t :identity t)
     (format stream "~a~:[ +/- ~a~;~*~]~:[~*~; ~a~]"
             (value obj)
@@ -44,14 +45,17 @@
 (setf (fdefinition '(setf rerr)) #'(setf relative-error))
 (export '(absolute-error relative-error aerr rerr))
 
+(declaim (inline quantityp))
 (defun quantityp (object)
-  (eql (type-of object) 'quantity))
+  (typep object 'quantity))
 (export 'quantityp)
 
+(declaim (inline has-error-p))
 (defun has-error-p (quantity)
   "Checks whether a quantity has uncertainty/error."
   (not (zerop (error-direct quantity))))
 
+(declaim (inline errorlessp))
 (defun errorlessp (quantity)
   "Checks whether a quantity is without uncertainty/error."
   (not (has-error-p quantity)))

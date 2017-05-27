@@ -24,10 +24,12 @@
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
 
+(declaim (inline has-unit-p))
 (defun has-unit-p (quantity)
   "Checks whether the given quantity has a unit."
   (consp (expand-unit (unit quantity))))
 
+(declaim (inline unitlessp))
 (defun unitlessp (quantity)
   "Checks whether the given quantity is unitless."
   (not (has-unit-p quantity)))

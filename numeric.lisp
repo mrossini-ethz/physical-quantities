@@ -18,10 +18,10 @@
                  arg))))
     (let ((lambda-list (mapcar #'decode-arg arg-list))
           (rest-var (if (position '&rest arg-list) (nth (1+ (position '&rest arg-list)) arg-list))))
-      (flet ((convert-arg (arg unitless)
+      (flet ((convert-arg (arg place unitless)
                ;; FIXME: Error message for &rest type arguments is bad
                `(cond
-                  ((realp ,arg) (setf ,arg (make-quantity :value ,arg)))
+                  ((realp ,arg) (setf ,place (make-quantity :value ,arg)))
                   ((not (quantityp ,arg)) (f-error operation-undefined-error ()
                                                    "Operation (~a ~{~a~^ ~}) is undefined if ~a is of type ~a."
                                                    ',name ',lambda-list ',arg (type-of ',arg)))
@@ -32,17 +32,17 @@
                                                     ',arg ',name ',lambda-list)
                                (drop-unit ()
                                  :report ,(format nil "Drop the unit from ~a." arg)
-                                 (setf ,arg (make-quantity% :value (value ,arg) :error (error-direct ,arg)))))))))))
-        (with-gensyms (var)
+                                 (setf ,place (make-quantity% :value (value ,arg) :error (error-direct ,arg)))))))))))
+        (with-gensyms (var nth)
           `(defun ,name ,lambda-list
              ;; Convert the compulsory arguments in the lambda list
              ,@(loop for arg in arg-list until (eql arg '&rest) collect
                     (multiple-value-bind (symbol unitless) (decode-arg arg)
-                      (convert-arg symbol unitless)))
+                      (convert-arg symbol symbol unitless)))
              ;; Convert the (optional) &rest arguments in the lambda list
              ,(when rest-var
-                    (multiple-value-bind (symbol unitless) (decode-arg rest-var)
-                      `(loop for ,var below (list-length ,symbol) do ,(convert-arg `(nth ,var ,symbol) unitless))))
+                    (multiple-value-bind (rest-list unitless) (decode-arg rest-var)
+                      `(loop for ,var in ,rest-list for ,nth upfrom 0 do ,(convert-arg var `(nth ,nth ,rest-list) unitless))))
              (locally ,@body)))))))
 (export 'defqop)
 
