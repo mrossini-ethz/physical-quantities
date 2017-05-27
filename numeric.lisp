@@ -227,6 +227,12 @@
 (export 'qatanh)
 
 (defqop qabs (number)
+  (when (and (has-error-p number) (zerop (value number)))
+    (restart-case (f-error error-propagation-error () "Error propagation undefined for operation (QABS NUMBER)~
+                                                      if NUMBER has value zero with non-zero uncertainty/error.")
+      (drop-uncertainty ()
+        :report "Drop the error/uncertainty from NUMBER."
+        (setf number (make-quantity% :value (value number) :unit (unit number))))))
   (make-quantity% :value (abs (value number)) :error (error-direct number) :unit (copy-unit (unit number))))
 (export 'qabs)
 
