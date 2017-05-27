@@ -383,6 +383,24 @@
     (qtest (q* #q(2 +/- 0.1d0) #q(-6 +/- 0.2d0) #q(8 +/- 0.2d0)) :value -96 :error (* 96 (py+ 0.05d0 2/60 0.025d0)) :unit ())
     ;; Q/
     (qtest (q/ #q(2 +/- 0.1d0) #q(-6 +/- 0.2d0) #q(8 +/- 0.2d0)) :value -2/48 :error (* 2/48 (py+ 0.05d0 2/60 0.025d0)) :unit ())
+    ;; QPOW
+    (qtest (qpow #q(-3 +/- 0.1d0 m) -3) :value -1/27 :error (* 1/27 0.1d0) :unit '(("m" -3)))
+    (qtest (qpow #q(-3 +/- 0.1d0 m) 0) :value 1 :error 0 :unit '())
+    (qtest (qpow #q(-3 +/- 0.1d0 m) 1) :value -3 :error 0.1d0 :unit '(("m" 1)))
+    (qtest (qpow #q(-3 +/- 0.1d0 m) 3) :value -27 :error 2.7d0 :unit '(("m" 3)))
+    ;; QROOT
+    (qtest (qroot #q(16d0 +/- 0.2d0 m ^ 2) 2) :value 4.0d0 :error 0.025d0 :unit '(("m" 1)))
+    (qtest (qroot #q(-27d0 +/- 0.2d0 m ^ 3) 3) :value -3.0d0 :error (* 0.2d0 1/27) :unit '(("m" 1)))
+    ;; QEXP
+    (qtest (qexp #q(-3d0 +/- 0.1d0)) :value (exp -3d0) :error (* 0.1d0 (exp -3d0)) :unit ())
+    ;; QEXPT
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(2d0 +/- 0.2d0)) :value (expt 3d0 2d0) :error (py+ 0.6d0 (/ 1.8d0 (log 3d0))) :unit ())
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(0d0 +/- 0.2d0)) :value (expt 3d0 0d0) :error (/ 0.2d0 (log 3d0)) :unit ())
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(-2d0 +/- 0.2d0)) :value (expt 3d0 -2d0) :error (py+ (/ 0.2d0 27d0) (/ 0.2d0 9d0 (log 3d0))) :unit ())
+    ;; QLN
+    (qtest (qln #q(3d0 +/- 0.1d0)) :value (log 3d0) :error (/ 0.1d0 3d0) :unit ())
+    ;; QLOG
+    (qtest (qlog #q(100d0 +/- 0.5d0) #q(10d0 +/- 0.1d0)) :value 2d0 :error (py+ (/ (* 0.1d0 (log 100d0)) 10d0 (expt (log 10d0) 2)) (/ 0.5d0 100d0 (log 10d0))) :unit ())
 ))
 
 (define-test interface-test ()
