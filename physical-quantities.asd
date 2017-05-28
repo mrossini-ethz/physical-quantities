@@ -25,9 +25,20 @@
   :author "Marco Rossini"
   :license "GPLv2"
   :depends-on (:physical-quantities)
+  :pathname "test"
   :serial t
-  :components ((:file "test/test-framework")
-               (:file "test/test")))
+  :components ((:file "test-framework")
+               (:file "test-init")
+               (:module test-definitions
+                        :pathname ""
+                        :components ((:file "definition-test")
+                                     (:file "conversion-test")
+                                     (:file "operations-test")
+                                     (:file "error-propagation-test")
+                                     (:file "predicate-test")
+                                     (:file "interface-test")
+                                     (:file "namespace-test")))
+               (:file "test")))
 
 (defmethod perform ((operation test-op) (system (eql (find-system :physical-quantities-test))))
   (funcall (intern "PHYSICAL-QUANTITIES-TEST" :physical-quantities)))
