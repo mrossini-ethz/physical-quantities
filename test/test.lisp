@@ -451,7 +451,8 @@
     ;; convert-unit
     (qtest (convert-unit #q(10 +/- 1/10 m / s) '((|km| 1) (|h| -1))) :value 36 :error 36/100 :unit '((|km| 1) (|h| -1)))
     (qtest (convert-unit #q(10 +/- 1/10 m / s) (make-unit '(|km| 1) '(|h| -1))) :value 36 :error 36/100 :unit '((|km| 1) (|h| -1)))
-    (condition= (convert-unit 10 '((|km| 1) (|h| -1))) invalid-unit-conversion-error)))
+    (condition= (convert-unit #q(10) '((|km| 1) (|h| -1))) invalid-unit-conversion-error)
+    (condition= (convert-unit 10 '((|km| 1) (|h| -1))) simple-error)))
 
 (define-test namespace-test ()
   (check

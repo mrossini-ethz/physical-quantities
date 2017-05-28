@@ -24,15 +24,9 @@
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
 
-(declaim (inline has-unit-p))
-(defun has-unit-p (quantity)
-  "Checks whether the given quantity has a unit."
-  (consp (expand-unit (unit quantity))))
-
-(declaim (inline unitlessp))
-(defun unitlessp (quantity)
-  "Checks whether the given quantity is unitless."
-  (not (has-unit-p quantity)))
+(declaim (inline unit-unitless-p))
+(defun unit-unitless-p (unit)
+  (consp (expand-unit unit)))
 
 ;; Unit expansion ------------------------------------------------------------------
 
@@ -102,27 +96,12 @@
   (units-equal (expand-unit unit-a) (expand-unit unit-b)))
 (export 'units-convertible)
 
-(defgeneric convert-unit% (value unit-a &optional unit-b))
-(defmethod convert-unit% ((value number) unit-a &optional unit-b)
+(defun convert-unit% (value unit-a unit-b)
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
         (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit unit-a) (str-unit unit-b) (str-unit base-unit-a) (str-unit base-unit-b)))
       (/ (* value conv-a) conv-b))))
-(defmethod convert-unit% ((q quantity) unit-a &optional unit-b)
-  (when unit-b
-    (error "Overdefined unit conversion!"))
-  (multiple-value-bind (base-unit-a conv-a) (expand-unit (unit q))
-    (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-a)
-      (unless (units-equal base-unit-a base-unit-b)
-        (f-error invalid-unit-conversion-error () "Conversion between units ~a and ~a not possible (base units: ~a and ~a)." (str-unit q) (str-unit unit-a) (str-unit base-unit-a) (str-unit base-unit-b)))
-      (make-quantity% :value (/ (* (value q) conv-a) conv-b) :error (if (minusp (error-direct q)) (error-direct q) (/ (* (error-direct q) conv-a) conv-b)) :unit unit-a))))
-
-(defun convert-unit (quantity unit)
-  (when (realp quantity)
-    (setf quantity (make-quantity :value quantity)))
-  (convert-unit% quantity (if (unitp unit) unit (apply #'make-unit unit))))
-(export 'convert-unit)
 
 (defun power-unit (unit power)
   (when (/= power 0) 
@@ -162,8 +141,6 @@
     ((null obj) "1")
     ;; number
     ((numberp obj) "1")
-    ;; quantity
-    ((quantityp obj) (str-unit (unit obj)))
     ;; unit
     ((listp obj) (with-output-to-string (stream)
                     ;; Loop over the unit factors

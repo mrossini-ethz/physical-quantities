@@ -60,6 +60,16 @@
   "Checks whether a quantity is without uncertainty/error."
   (not (has-error-p quantity)))
 
+(declaim (inline has-unit-p))
+(defun has-unit-p (quantity)
+  "Checks whether the given quantity has a unit."
+  (unit-unitless-p (unit quantity)))
+
+(declaim (inline unitlessp))
+(defun unitlessp (quantity)
+  "Checks whether the given quantity is unitless."
+  (not (has-unit-p quantity)))
+
 ;; Internal function to make quantities
 (defun make-quantity% (&key (value 0) (error 0) (unit nil))
   (make-instance 'quantity :value value :error error :unit unit))
@@ -74,6 +84,15 @@
   (make-instance 'quantity :value value :error (if (eql error-type :absolute) error (- error)) :unit (if (unitp unit) unit (apply #'make-unit unit))))
 (export 'make-quantity)
 
+(defun convert-unit (quantity unit)
+  (let ((new-unit  (if (unitp unit) unit (apply #'make-unit unit))))
+    (make-quantity% :value (convert-unit% (value quantity) (unit quantity) new-unit)
+                    :error (if (minusp (error-direct quantity))
+                               (error-direct quantity)
+                               (convert-unit% (absolute-error quantity) (unit quantity) new-unit))
+                    :unit new-unit)))
+(export 'convert-unit)
+
 (defgeneric eval-quantity (value error unit-a unit-b))
 ;; #q(<n> [+/- <n>] [m / s])
 (defmethod eval-quantity ((value number) (error number) unit-a (unit-b (eql nil)))
@@ -86,10 +105,10 @@
   value)
 ;; #q(<q> -> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) unit-a (unit-b (eql nil)))
-  (convert-unit% q (dereference-unit unit-a)))
+  (convert-unit q (dereference-unit unit-a)))
 ;; #q(<q> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) (unit-a (eql nil)) unit-b)
-  (convert-unit% q (dereference-unit unit-b)))
+  (convert-unit q (dereference-unit unit-b)))
 
 (defmacro quantity (&rest expr)
   "Function to define quantities without the reader macro."

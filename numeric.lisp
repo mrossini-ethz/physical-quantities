@@ -21,7 +21,7 @@
       (flet ((convert-arg (arg place unitless)
                ;; FIXME: Error message for &rest type arguments is bad
                `(cond
-                  ((realp ,arg) (setf ,place (make-quantity :value ,arg)))
+                  ((realp ,arg) (setf ,place (make-quantity% :value ,arg)))
                   ((not (quantityp ,arg)) (f-error operation-undefined-error ()
                                                    "Operation (~a ~{~a~^ ~}) is undefined if ~a is of type ~a."
                                                    ',name ',lambda-list ',arg (type-of ',arg)))
@@ -75,7 +75,7 @@
   (if numbers
       (let ((converted-numbers (append (list (first numbers))
                                        (loop for n in (rest numbers) collect
-                                            (convert-unit% n (unit (first numbers)))))))
+                                            (convert-unit n (unit (first numbers)))))))
         (make-quantity% :value (apply #'+ (mapcar #'value converted-numbers))
                         :error (apply #'py+ (mapcar #'aerr converted-numbers))
                         :unit (copy-unit (unit (first converted-numbers)))))
@@ -85,7 +85,7 @@
 ;; Q-
 (defqop q- (number &rest more-numbers)
   (let ((converted-numbers (append (list number)
-                                   (loop for n in more-numbers collect (convert-unit% n (unit number))))))
+                                   (loop for n in more-numbers collect (convert-unit n (unit number))))))
     (make-quantity% :value (apply #'- (mapcar #'value converted-numbers))
                     :error (apply #'py+ (mapcar #'aerr converted-numbers))
                     :unit (copy-unit (unit (first converted-numbers))))))
@@ -256,7 +256,7 @@
   (= x y))
 (defmethod q= ((x quantity) (y real) &optional (p-value 95/100))
   (unless (unitlessp x)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q=." (str-unit (unit x)) (str-unit y)))
   ;; Quantity is unitless
   (if (errorlessp x)
       ;; Quantity has no uncertainty
@@ -271,7 +271,7 @@
 (defmethod q= ((x quantity) (y quantity) &optional (p-value 95/100))
   ;; Calculate the difference between the quantities. This may raise an error.
   (unless (units-convertible (unit x) (unit y))
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q=." (str-unit (unit x)) (str-unit (unit y))))
   (let ((val (q- y x)))
     (if (errorlessp val)
         ;; Difference has no uncertainty
@@ -291,7 +291,7 @@
   (< x y))
 (defmethod q< ((x quantity) (y real) &optional (p-value 0.95))
   (unless (unitlessp x)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit (unit x)) (str-unit y)))
   ;; Quantity is unitless
   (if (errorlessp x)
       ;; Quantity has no uncertainty
@@ -300,7 +300,7 @@
       (< (+ (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
 (defmethod q< ((x real) (y quantity) &optional (p-value 0.95))
   (unless (unitlessp y)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit x) (str-unit (unit y))))
   ;; Quantity is unitless
   (if (errorlessp y)
       ;; Quantity has no uncertainty
@@ -309,7 +309,7 @@
       (< x (- (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
 (defmethod q< ((x quantity) (y quantity) &optional (p-value 0.95))
   (unless (units-convertible (unit x) (unit y))
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<." (str-unit (unit x)) (str-unit (unit y))))
   (let ((delta (q- y x)))
     (> (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
 (export 'q<)
@@ -320,7 +320,7 @@
   (<= x y))
 (defmethod q<= ((x quantity) (y real) &optional (p-value 0.95))
   (unless (unitlessp x)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit (unit x)) (str-unit y)))
   ;; Quantity is unitless
   (if (errorlessp x)
       ;; Quantity has no uncertainty
@@ -329,7 +329,7 @@
       (<= (+ (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
 (defmethod q<= ((x real) (y quantity) &optional (p-value 0.95))
   (unless (unitlessp y)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit x) (str-unit (unit y))))
   ;; Quantity is unitless
   (if (errorlessp y)
       ;; Quantity has no uncertainty
@@ -338,7 +338,7 @@
       (<= x (- (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
 (defmethod q<= ((x quantity) (y quantity) &optional (p-value 0.95))
   (unless (units-convertible (unit x) (unit y))
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q<=." (str-unit (unit x)) (str-unit (unit y))))
   (let ((delta (q- y x)))
     (>= (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
 (export 'q<=)
@@ -349,7 +349,7 @@
   (> x y))
 (defmethod q> ((x quantity) (y real) &optional (p-value 0.95))
   (unless (unitlessp x)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit (unit x)) (str-unit y)))
   ;; Quantity is unitless
   (if (errorlessp x)
       ;; Quantity has no uncertainty
@@ -358,7 +358,7 @@
       (> (- (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
 (defmethod q> ((x real) (y quantity) &optional (p-value 0.95))
   (unless (unitlessp y)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit x) (str-unit (unit y))))
   ;; Quantity is unitless
   (if (errorlessp y)
       ;; Quantity has no uncertainty
@@ -367,7 +367,7 @@
       (> x (+ (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
 (defmethod q> ((x quantity) (y quantity) &optional (p-value 0.95))
   (unless (units-convertible (unit x) (unit y))
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>." (str-unit (unit x)) (str-unit (unit y))))
   (let ((delta (q- x y)))
     (> (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
 (export 'q>)
@@ -378,7 +378,7 @@
   (>= x y))
 (defmethod q>= ((x quantity) (y real) &optional (p-value 0.95))
   (unless (unitlessp x)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit (unit x)) (str-unit y)))
   ;; Quantity is unitless
   (if (errorlessp x)
       ;; Quantity has no uncertainty
@@ -387,7 +387,7 @@
       (>= (- (value x) (* (aerr x) (confidence-interval p-value :two-sided nil))) y)))
 (defmethod q>= ((x real) (y quantity) &optional (p-value 0.95))
   (unless (unitlessp y)
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit x) (str-unit (unit y))))
   ;; Quantity is unitless
   (if (errorlessp y)
       ;; Quantity has no uncertainty
@@ -396,7 +396,7 @@
       (>= x (+ (value y) (* (aerr y) (confidence-interval p-value :two-sided nil))))))
 (defmethod q>= ((x quantity) (y quantity) &optional (p-value 0.95))
   (unless (units-convertible (unit x) (unit y))
-    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit x) (str-unit y)))
+    (f-error invalid-unit-conversion-error () "The units ~a and ~a are incompatible under operation Q>=." (str-unit (unit x)) (str-unit (unit y))))
   (let ((delta (q- x y)))
     (>= (value delta) (* (aerr delta) (confidence-interval p-value :two-sided nil)))))
 (export 'q>=)
