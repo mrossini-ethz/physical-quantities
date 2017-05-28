@@ -14,9 +14,9 @@
                (:file "unit-database")
                (:file "units")
                (:file "quantity")
+               (:file "numeric")
                (:file "parse-rules")
                (:file "read-macro")
-               (:file "numeric")
                (:file "si-units"))
   :in-order-to ((test-op (test-op :physical-quantities-test))))
 
