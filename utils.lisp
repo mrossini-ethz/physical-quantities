@@ -68,7 +68,7 @@
 
 (defun py+ (&rest numbers)
   "Pythagorean addition"
-  (sqrt (coerce (apply #'+ (mapcar (lambda (x) (* x x)) numbers)) 'double-float)))
+  (sqrt (apply #'+ (mapcar (lambda (x) (expt x 2)) numbers))))
 
 ;; Error function -----------------------------------------------------
 

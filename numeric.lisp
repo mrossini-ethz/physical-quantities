@@ -65,7 +65,7 @@
                               `(* (symbol-macrolet (,@(loop for var2 in variables for gensym in gensyms collect `(,var2 ,gensym))) ,expr) (aerr ,var)))))
               ;; Compute final error
               (if (> n 2)
-                  `(sqrt (coerce (+ ,@(loop for p in parts collect `(expt ,p 2))) 'double-float))
+                  `(py+ ,@(loop for p in parts collect p))
                   `(abs ,@parts))))))))
 
 ;; Operations ------------------------------------------------------------------------
