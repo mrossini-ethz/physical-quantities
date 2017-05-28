@@ -103,10 +103,10 @@
 ;; #q(<q>)
 (defmethod eval-quantity ((value quantity) (error (eql 0)) (unit-a (eql nil)) (unit-b (eql nil)))
   value)
-;; #q(<q> -> km / h)
+;; #q(<q> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) unit-a (unit-b (eql nil)))
   (convert-unit q (dereference-unit unit-a)))
-;; #q(<q> km / h)
+;; #q(<q> -> km / h)
 (defmethod eval-quantity ((q quantity) (error (eql 0)) (unit-a (eql nil)) unit-b)
   (convert-unit q (dereference-unit unit-b)))
 
