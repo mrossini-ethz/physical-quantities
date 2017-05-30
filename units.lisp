@@ -26,8 +26,8 @@
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
 
-(declaim (inline unit-unitless-p))
-(defun unit-unitless-p (unit)
+(declaim (inline unit-has-unit-p))
+(defun unit-has-unit-p (unit)
   (consp (expand-unit unit)))
 
 ;; Unit expansion ------------------------------------------------------------------

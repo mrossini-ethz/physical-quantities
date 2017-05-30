@@ -63,7 +63,7 @@
 (declaim (inline has-unit-p))
 (defun has-unit-p (quantity)
   "Checks whether the given quantity has a unit."
-  (unit-unitless-p (unit quantity)))
+  (unit-has-unit-p (unit quantity)))
 
 (declaim (inline unitlessp))
 (defun unitlessp (quantity)
