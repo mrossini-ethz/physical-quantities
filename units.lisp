@@ -18,9 +18,11 @@
 (export 'make-unit)
 
 (defun copy-unit (unit)
+  "Creates a copy of the given unit."
   (loop for uf in unit collect (make-uf (uf-unit uf) (uf-power uf))))
 
 (defun unitp (object)
+  "Checks whether an object is a unit."
   (and (listp object) (every #'unit-factor-p object)))
 (export 'unitp)
 
@@ -40,7 +42,7 @@
     `(,(apply #'* f conv) ,@units)))
 
 (defun reduce-unit (unit)
-  ;; Reduces the powers of duplicate unit factors in a given unit, e.g. km^2 / km -> km, but m / km -> m / km. No unit lookup is made.
+  "Reduces the powers of duplicate unit factors in a given unit, e.g. km^2 / km -> km, but m / km -> m / km. No unit lookup is made."
   (if (l> unit 1)
       ;; Split the list of unit factors into those that have the same unit as the first one and those that do not
       (let* ((name (uf-unit (first unit)))
@@ -53,7 +55,7 @@
       unit))
 
 (defun expand-unit-factor (factor)
-  ;; Converts a single unit factor into its expansion of base units, together with a conversion factor
+  "Converts a single unit factor into its expansion of base units, together with a conversion factor"
   ;; Query the unit translation table
   (with-unit-lookup (base expansion (uf-unit factor))
     ;; When expansion is nil the unit is a base unit
@@ -67,17 +69,17 @@
         (list 1 (make-uf base (uf-power factor))))))
 
 (defun expand-unit (unit)
-  ;; Expands the given unit into base units and reduces them
+  "Expands the given unit into base units and reduces them"
   (destructuring-bind (conv &rest unit-factors)
       (apply #'collect-factors 1 (loop for factor in unit collect (expand-unit-factor factor)))
     (values (reduce-unit unit-factors) conv)))
 
 (defun dereference-unit (unit)
-  ;; Takes a unit and looks up aliases and abbreviations of unit factors and replaces them with the base unit.
+  "Takes a unit and looks up aliases and abbreviations of unit factors and replaces them with the main unit designators."
   (loop for uf in unit collect (make-uf (lookup-unit (uf-unit uf)) (uf-power uf))))
 
 (defun units-equal (unit-a unit-b)
-  ;; Reduces both units and compares the unit factors for equality (in unit and power)
+  "Reduces both units (without converting to base units) and compares the unit factors for equality (in unit and power)"
   (let ((a (reduce-unit unit-a)) (b (reduce-unit unit-b)))
     (when (ll= a b)
       (loop for uf-a in a always
@@ -85,18 +87,19 @@
 (export 'units-equal)
 
 (defun units-equalp (unit-a unit-b)
-  ;; Reduces both units and compares the unit factors for equality (in unit and power)
+  "Reduces both units (converting to base units) and compares the unit factors for equality (in unit and power)"
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (and (equalp conv-a conv-b) (units-equal base-unit-a base-unit-b)))))
 (export 'units-equalp)
 
 (defun units-convertible (unit-a unit-b)
-  ;; Expands and reduces both units and compares the unit factors for equality (in unit and power)
+  "Expands and reduces both units and compares the unit factors for equality (in unit and power)"
   (units-equal (expand-unit unit-a) (expand-unit unit-b)))
 (export 'units-convertible)
 
 (defun convert-unit% (value unit-a unit-b)
+  "Applies the conversion factor between unit-a and unit-b to the given value."
   (multiple-value-bind (base-unit-a conv-a) (expand-unit unit-a)
     (multiple-value-bind (base-unit-b conv-b) (expand-unit unit-b)
       (unless (units-equal base-unit-a base-unit-b)
@@ -104,18 +107,22 @@
       (/ (* value conv-a) conv-b))))
 
 (defun power-unit (unit power)
+  "Raises the unit to the given power."
   (when (/= power 0) 
     (loop for uf in unit collect (uf-pow uf power))))
 
 (defun multiply-units (&rest units)
+  "Multiplies units with each other and reduces the result."
   (reduce-unit (apply #'append units)))
 
 (defun divide-units (&rest units)
+  "Divides the given units with each, reducing the result."
   (if (l> units 1)
       (reduce-unit (append (first units) (apply #'append (mapcar #'(lambda (x) (power-unit x -1)) (rest units)))))
       (power-unit (first units) -1)))
 
 (defun root-unit (unit index)
+  "Extracts the root from the given unit if possible. Converts to base units if necessary."
   (if (loop for uf in unit always (zerop (rem (uf-power uf) index)))
       ;; Root the unit directly (without converting to base units)
       (values (loop for uf in unit
@@ -132,10 +139,11 @@
                 (expt conv (/ index))))))
 
 (defun sort-unit (unit)
+  "Sorts the unit by positive and negative powers."
   (stable-sort unit #'(lambda (a b) (and (not (minusp a)) (minusp b))) :key #'uf-power))
 
 (defun str-unit (obj)
-  ;; Prints the given unit in human readable form
+  "Prints the given unit in human readable form"
   (cond
     ;; nil
     ((null obj) "1")
