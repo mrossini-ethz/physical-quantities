@@ -59,7 +59,8 @@
   "Report the results of a single test case. Called by 'check'."
   (when (not result)
     (incf *test-failures*)
-    (format t "~V,0T ~:[Failed~;Passed~]: ~s~@[ => ~*~s~]~%" (- (list-length *test-name*) 1) result form (not (equal form expanded-form)) expanded-form))
+    (let ((*package* (find-package :pq)))
+      (format t "~V,0T ~:[Failed~;Passed~]: ~s~@[ => ~*~s~]~%" (- (list-length *test-name*) 1) result form (not (equal form expanded-form)) expanded-form)))
   result)
 
 (defmacro combine-results (&body forms)
