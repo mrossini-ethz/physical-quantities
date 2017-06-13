@@ -1,5 +1,3 @@
-(in-package :asdf-user)
-
 (defsystem "physical-quantities"
   :description "Use lisp numbers for physical quantities with unit and error."
   :version "0.1"
