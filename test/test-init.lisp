@@ -8,8 +8,8 @@
 (defun float= (a b)
   (let ((delta (abs (- b a))))
     (typecase delta
-      (double-float (< delta double-float-epsilon))
-      (single-float (< delta single-float-epsilon))
+      (double-float (< delta (* 2 double-float-epsilon)))
+      (single-float (< delta (* 2 single-float-epsilon)))
       (t (= a b)))))
 
 (defun qtest (quantity &key (value 0 value-supplied-p) (error 0 error-supplied-p) (unit () unit-supplied-p))

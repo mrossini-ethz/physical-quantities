@@ -136,7 +136,7 @@
                    collect (make-uf (uf-unit uf) (/ (uf-power uf) index))
                    else
                    do (f-error operation-undefined-error () "INDEX in operation (ROOT-UNIT UNIT INDEX) is undefined if INDEX is ~a and UNIT is ~a (base units: ~a)." index (str-unit unit) (str-unit base-unit)))
-                (expt conv (/ index))))))
+                (if (= index 2) (sqrt conv) (expt conv (/ index)))))))
 
 (defun sort-unit (unit)
   "Sorts the unit by positive and negative powers."

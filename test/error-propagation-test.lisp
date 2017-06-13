@@ -17,7 +17,7 @@
     (qtest (qpow #q(-3 +/- 0.1d0 m) 3) :value -27 :error 2.7d0 :unit '(("m" 3)))
     ;; QROOT
     (qtest (qroot #q(16d0 +/- 0.2d0 m ^ 2) 2) :value 4.0d0 :error 0.025d0 :unit '(("m" 1)))
-    (qtest (qroot #q(-27d0 +/- 0.2d0 m ^ 3) 3) :value -3.0d0 :error (* 0.2d0 1/27) :unit '(("m" 1)))
+    (qtest (qroot #q(-27d0 +/- 0.2d0 m ^ 3) 3) :value (- (expt 27d0 1/3)) :error (* 0.2d0 1/27) :unit '(("m" 1)))
     ;; QEXP
     (qtest (qexp #q(-3d0 +/- 0.1d0)) :value (exp -3d0) :error (* 0.1d0 (exp -3d0)) :unit ())
     ;; QEXPT

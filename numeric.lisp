@@ -132,7 +132,7 @@
                   (if (and (minusp (value radicand)) (oddp (value degree)))
                       (let ((val (* conv (- (expt (- (value radicand)) (/ (value degree)))))))
                         (make-quantity% :value val :error (error-propagation radicand (if (zerop radicand) 0 (/ val radicand degree)) degree 0) :unit unit))
-                      (let ((val (* conv (expt (value radicand) (/ (value degree))))))
+                      (let ((val (* conv (if (= (value degree) 2) (sqrt (value radicand)) (expt (value radicand) (/ (value degree)))))))
                         (make-quantity% :value val :error (error-propagation radicand (if (zerop radicand) 0 (/ val radicand degree)) degree 0) :unit unit))))
     (operation-undefined-error () (f-error invalid-unit-operation-error () "The unit of RADICAND in operation (QROOT RADICAND DEGREE) must have a power ~
                                                                             that is a multiple of DEGREE." degree (str-unit (unit radicand))))))
