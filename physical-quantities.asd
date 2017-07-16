@@ -1,5 +1,5 @@
 (defsystem "physical-quantities"
-  :description "Use lisp numbers for physical quantities with unit and error."
+  :description "A library that provides a numeric type with optional unit and/or uncertainty for computations with automatic error propagation."
   :version "0.1"
   :author "Marco Rossini"
   :license "GPLv2"
