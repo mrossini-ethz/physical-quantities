@@ -13,7 +13,7 @@
             (value obj)
             (zerop (error-direct obj))
             (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj))
-            (has-unit-p obj)
+            (reduce-unit (unit obj))
             (str-unit (unit obj)))))
 
 ;; Error functions

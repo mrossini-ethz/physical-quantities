@@ -153,7 +153,7 @@
     ((listp obj) (with-output-to-string (stream)
                     ;; Loop over the unit factors
                     (loop
-                       for uf in (sort-unit (copy-tree obj))
+                       for uf in (sort-unit (reduce-unit (copy-tree obj)))
                        for i upfrom 0
                        ;; Insert a space unless it's before the first unit factor
                        when (plusp i) do (format stream " ")
