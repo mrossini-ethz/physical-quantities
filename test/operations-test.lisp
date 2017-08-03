@@ -231,6 +231,7 @@
     ;; Trigonometric functions
     ;; qsin
     (qtest (qsin 2) :value (sin 2) :error 0 :unit ())
+    (qtest (qsin #q(2 mm / m)) :value (sin 2/1000) :unit ())
     (qtest (qsin #q(2 +/- 0.1)) :value (sin 2) :unit ())
     (condition= (qsin #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcos

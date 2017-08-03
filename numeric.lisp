@@ -20,19 +20,22 @@
           (rest-var (if (position '&rest arg-list) (nth (1+ (position '&rest arg-list)) arg-list))))
       (flet ((convert-arg (arg place unitless)
                ;; FIXME: Error message for &rest type arguments is bad
-               `(cond
-                  ((realp ,arg) (setf ,place (make-quantity% :value ,arg)))
-                  ((not (quantityp ,arg)) (f-error operation-undefined-error ()
-                                                   "Operation (~a ~{~a~^ ~}) is undefined if ~a is of type ~a."
-                                                   ',name ',lambda-list ',arg (type-of ',arg)))
+               `(progn
+                  (cond
+                    ((realp ,arg) (setf ,place (make-quantity% :value ,arg)))
+                    ((not (quantityp ,arg)) (f-error operation-undefined-error ()
+                                                     "Operation (~a ~{~a~^ ~}) is undefined if ~a is of type ~a."
+                                                     ',name ',lambda-list ',arg (type-of ',arg)))
+                    ,@(when unitless
+                        `(((has-unit-p ,arg)
+                           (restart-case (f-error invalid-unit-operation-error ()
+                                                  "~a in operation (~a ~{~a~^ ~}) must be unitless."
+                                                  ',arg ',name ',lambda-list)
+                             (drop-unit ()
+                               :report ,(format nil "Drop the unit from ~a." arg)
+                               (setf ,place (make-quantity% :value (value ,arg) :error (error-direct ,arg)))))))))
                   ,@(when unitless
-                          `(((has-unit-p ,arg)
-                             (restart-case (f-error invalid-unit-operation-error ()
-                                                    "~a in operation (~a ~{~a~^ ~}) must be unitless."
-                                                    ',arg ',name ',lambda-list)
-                               (drop-unit ()
-                                 :report ,(format nil "Drop the unit from ~a." arg)
-                                 (setf ,place (make-quantity% :value (value ,arg) :error (error-direct ,arg)))))))))))
+                      `((setf ,place (convert-unit ,arg nil)))))))
         (with-gensyms (var nth)
           `(defun ,name ,lambda-list
              ;; Convert the compulsory arguments in the lambda list
@@ -40,9 +43,9 @@
                     (multiple-value-bind (symbol unitless) (decode-arg arg)
                       (convert-arg symbol symbol unitless)))
              ;; Convert the (optional) &rest arguments in the lambda list
-             ,(when rest-var
-                    (multiple-value-bind (rest-list unitless) (decode-arg rest-var)
-                      `(loop for ,var in ,rest-list for ,nth upfrom 0 do ,(convert-arg var `(nth ,nth ,rest-list) unitless))))
+             ,@(when rest-var
+                 (multiple-value-bind (rest-list unitless) (decode-arg rest-var)
+                   `((loop for ,var in ,rest-list for ,nth upfrom 0 do ,(convert-arg var `(nth ,nth ,rest-list) unitless)))))
              (locally ,@body)))))))
 (export 'defqop)
 
