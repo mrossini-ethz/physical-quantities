@@ -16,9 +16,9 @@
                (:file "parse-rules")
                (:file "read-macro")
                (:file "si-units"))
-  :in-order-to ((test-op (test-op :physical-quantities-test))))
+  :in-order-to ((test-op (test-op :physical-quantities/test))))
 
-(defsystem "physical-quantities-test"
+(defsystem "physical-quantities/test"
   :description "Unit testing for physical quantities."
   :author "Marco Rossini"
   :license "GPLv2"
@@ -38,5 +38,5 @@
                                      (:file "namespace-test")))
                (:file "test")))
 
-(defmethod perform ((operation test-op) (system (eql (find-system :physical-quantities-test))))
+(defmethod perform ((operation test-op) (system (eql (find-system :physical-quantities/test))))
   (funcall (intern "PHYSICAL-QUANTITIES-TEST" :physical-quantities)))
