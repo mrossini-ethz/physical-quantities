@@ -2,7 +2,11 @@
 
 Physical quantities uses [semantic versioning](http://semver.org/).
 
-## Unreleased
+## Version 0.1.1 - 2018-06-13:
+
+### Features
+
+  * Added a function for conversion to base units.
 
 ### Bugfixes
 
