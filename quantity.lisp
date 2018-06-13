@@ -93,6 +93,10 @@
                     :unit new-unit)))
 (export 'convert-unit)
 
+(defun convert-to-base-units (quantity)
+  (convert-unit quantity (expand-unit (unit quantity))))
+(export 'convert-to-base-units)
+
 (defgeneric eval-quantity (value error unit-a unit-b))
 ;; #q(<n> [+/- <n>] [m / s])
 (defmethod eval-quantity ((value number) (error number) unit-a (unit-b (eql nil)))
