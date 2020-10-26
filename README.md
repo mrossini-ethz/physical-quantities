@@ -17,7 +17,7 @@ The following example illustrates the use of the library:
 (define-si-units)
 (define-read-macros)
 
-(let (m c m)
+(let (m c e)
   ;; Define the mass
   (setf m #q(1.00 +/- 0.01 kg))
   ;; The speed of light
