@@ -2,7 +2,13 @@
 
 Physical quantities uses [semantic versioning](http://semver.org/).
 
-## Version 0.1.1 - 2018-06-13:
+## Version 0.2.1 - 2018-06-13:
+
+### Bugfixes
+
+  * Fixed a compilation error on CCL (fix by sternenseemann)
+
+## Version 0.2.0 - 2018-06-13:
 
 ### Features
 
