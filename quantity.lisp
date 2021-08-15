@@ -6,16 +6,6 @@
    (unit :initarg :unit :initform () :accessor unit)))
 (export '(quantity value unit))
 
-(defmethod print-object ((obj quantity) stream)
-  (declare (notinline has-unit-p))
-  (print-unreadable-object (obj stream :type t :identity t)
-    (format stream "~a~:[ +/- ~a~;~*~]~:[~*~; ~a~]"
-            (value obj)
-            (zerop (error-direct obj))
-            (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj))
-            (reduce-unit (unit obj))
-            (str-unit (unit obj)))))
-
 ;; Error functions
 (defun ae (val err)
   (if (minusp err) (* val (- err)) err))
@@ -69,6 +59,16 @@
 (defun unitlessp (quantity)
   "Checks whether the given quantity is unitless."
   (not (has-unit-p quantity)))
+
+(defmethod print-object ((obj quantity) stream)
+  (declare (notinline has-unit-p))
+  (print-unreadable-object (obj stream :type t :identity t)
+    (format stream "~a~:[ +/- ~a~;~*~]~:[~*~; ~a~]"
+            (value obj)
+            (zerop (error-direct obj))
+            (if (minusp (error-direct obj)) (format nil "~a %" (* 100 (relative-error obj))) (absolute-error obj))
+            (reduce-unit (unit obj))
+            (str-unit (unit obj)))))
 
 ;; Internal function to make quantities
 (defun make-quantity% (&key (value 0) (error 0) (unit nil))
