@@ -40,7 +40,7 @@
   (define-unit |mole| :abbrev |mol| :alias |moles| :prefix-test (prefix-base 10))
   (define-unit |candela| :abbrev |cd| :prefix-test (prefix-base 10 3))
   ;; Named units derived from SI base units
-  (define-unit |radian| :def ((/ 180 pi) |degree|) :abbrev |rad| :prefix-test (prefix-range 10 nil -3))
+  (define-unit |radian| :def (1) :abbrev |rad| :prefix-test (prefix-range 10 nil -3))
   (define-unit |steradian| :def (1) :abbrev |sr| :prefix-test (prefix-range 10 nil -3))
   (define-unit |hertz| :def (1 / |second|) :abbrev |Hz| :prefix-test (prefix-base 10 3))
   (define-unit |newton| :def (1 |kilogram| |metre| / |second| ^ 2) :abbrev |N| :prefix-test (prefix-base 10 3))
@@ -67,7 +67,7 @@
   (define-unit |minute| :def (60 |second|) :alias |minutes| :abbrev |min| :prefix-test (constantly nil))
   (define-unit |hour| :def (60 |minute|) :alias |hours| :abbrev |h| :prefix-test (constantly nil))
   (define-unit |day| :def (24 |hour|) :alias |days| :abbrev |d| :prefix-test (constantly nil))
-  (define-unit |degree| :def (1) :alias |degrees| :abbrev |deg| :prefix-test (prefix-range 10 nil -3))
+  (define-unit |degree| :def ((/ pi 180) |radian|) :alias |degrees| :abbrev |deg| :prefix-test (prefix-range 10 nil -3))
   (define-unit |hectare| :def (10000 |metre| ^ 2) :alias |hectares| :abbrev |ha| :prefix-test (constantly nil))
   (define-unit |litre| :def (1 |decimetre| ^ 3) :alias (|liter| |litres| |liters|) :abbrev (|l| |L|) :prefix-test (prefix-range 10 nil 2))
   (define-unit |tonne| :def (1000 |kilogram|) :alias |tonnes| :prefix-test (prefix-range 10 3 nil))
