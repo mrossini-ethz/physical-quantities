@@ -233,14 +233,26 @@
     (qtest (qsin 2) :value (sin 2) :error 0 :unit ())
     (qtest (qsin #q(2 mm / m)) :value (sin 2/1000) :unit ())
     (qtest (qsin #q(2 +/- 0.1)) :value (sin 2) :unit ())
+    (qtest (qsin #q(0 degree)) :value 0 :unit ())
+    (qtest (qsin #q(0 radian)) :value 0 :unit ())
+    (qtest (qsin #q(180 degree)) :value (sin (* 180 (/ pi 180))) :unit ())
+    (qtest (qsin #q(pi radian)) :value (sin pi) :unit ())
     (condition= (qsin #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qcos
     (qtest (qcos 2) :value (cos 2) :error 0 :unit ())
     (qtest (qcos #q(2 +/- 0.1)) :value (cos 2) :unit ())
+    (qtest (qcos #q(0 degree)) :value 1 :unit ())
+    (qtest (qcos #q(0 radian)) :value 1 :unit ())
+    (qtest (qcos #q(180 degree)) :value (cos (* 180 (/ pi 180))) :unit ())
+    (qtest (qcos #q(pi radian)) :value (cos pi) :unit ())
     (condition= (qcos #q(2 +/- 0.1 m)) invalid-unit-operation-error)
     ;; qtan
     (qtest (qtan 2) :value (tan 2) :error 0 :unit ())
     (qtest (qtan #q(2 +/- 0.1)) :value (tan 2) :unit ())
+    (qtest (qtan #q(0 degree)) :value 0 :unit ())
+    (qtest (qtan #q(0 radian)) :value 0 :unit ())
+    (qtest (qtan #q(180 degree)) :value (tan (* 180 (/ pi 180))) :unit ())
+    (qtest (qtan #q(pi radian)) :value (tan pi) :unit ())
     (condition= (qtan #q(2 +/- 0.1 m)) invalid-unit-operation-error)
 
     ;; Inverse trigonometric functions
