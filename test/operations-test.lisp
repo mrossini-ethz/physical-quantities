@@ -184,6 +184,7 @@
     ;; Exponentiation qexpt, base: real, exponent: real
     (qtest (qexpt -2 -3) :value -1/8 :error 0 :unit ())
     (qtest (qexpt 0 0) :value 1 :error 0 :unit ())
+    (qtest (qexpt 1 1) :value 1 :error 0 :unit ())
     ;; Exponentiation qexpt, base: real, exponent: quantity
     (qtest (qexpt -2 #q(-3)) :value -1/8 :error 0 :unit ())
     (qtest (qexpt 2 #q(-3 +/- 0.1)) :value 1/8 :unit ())
@@ -203,6 +204,9 @@
     (condition= (qexpt #q(27 m) 0.33) invalid-unit-operation-error)
     ;; Exponentiation qexpt, base: quantity, exponent: quantity
     (condition= (qexpt #q(27) #q(3 m)) invalid-unit-operation-error)
+    (qtest (qexpt #q(0) #q(0)) :value 1 :error 0 :unit ())
+    (qtest (qexpt #q(1) #q(1)) :value 1 :error 0 :unit ())
+    (qtest (qexpt #q(1d0) #q(1d0)) :value 1d0 :error 0 :unit ())
     (qtest (qexpt #q(0) #q(1/3)) :value 0 :error 0 :unit ())
     (qtest (qexpt #q(27) #q(1/3)) :value 3 :error 0 :unit ())
     (qtest (qexpt #q(27) #q(1/3 +/- 0.01)) :value 3 :unit ())

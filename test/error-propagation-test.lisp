@@ -21,9 +21,9 @@
     ;; QEXP
     (qtest (qexp #q(-3d0 +/- 0.1d0)) :value (exp -3d0) :error (* 0.1d0 (exp -3d0)) :unit ())
     ;; QEXPT
-    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(2d0 +/- 0.2d0)) :value (expt 3d0 2d0) :error (py+ 0.6d0 (/ 1.8d0 (log 3d0))) :unit ())
-    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(0d0 +/- 0.2d0)) :value (expt 3d0 0d0) :error (/ 0.2d0 (log 3d0)) :unit ())
-    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(-2d0 +/- 0.2d0)) :value (expt 3d0 -2d0) :error (py+ (/ 0.2d0 27d0) (/ 0.2d0 9d0 (log 3d0))) :unit ())
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(2d0 +/- 0.2d0)) :value (expt 3d0 2d0) :error (py+ 0.6d0 (* 1.8d0 (log 3d0))) :unit ())
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(0d0 +/- 0.2d0)) :value (expt 3d0 0d0) :error (* 0.2d0 (log 3d0)) :unit ())
+    (qtest (qexpt #q(3d0 +/- 0.1d0) #q(-2d0 +/- 0.2d0)) :value (expt 3d0 -2d0) :error (py+ (/ 0.2d0 27d0) (* 0.2d0 (/ 9d0) (log 3d0))) :unit ())
     ;; QLN
     (qtest (qln #q(3d0 +/- 0.1d0)) :value (log 3d0) :error (/ 0.1d0 3d0) :unit ())
     ;; QLOG
