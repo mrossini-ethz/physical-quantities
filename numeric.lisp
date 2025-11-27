@@ -169,7 +169,7 @@
   (cond
     ((and (integerp (value exponent)) (errorlessp exponent)) (qpow base exponent))
     ((and (typep (value exponent) 'ratio) (errorlessp exponent)) (qroot (qpow base (numerator (value exponent))) (denominator (value exponent))))
-    (t (let ((val (expt (value base) (value exponent))))
+    (t (let ((val (expt (value (convert-unit base nil)) (value (convert-unit exponent nil)))))
          (make-quantity% :value val :error (error-propagation base (if (zerop base) 0 (* exponent (expt base (1- exponent)))) exponent (if (zerop base) 0 (* val (log base)))))))))
 (export 'qexpt)
 

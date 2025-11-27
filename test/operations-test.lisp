@@ -119,6 +119,8 @@
     (qtest (qpow #q(-2 +/- 0.1 m) #q(3)) :value -8 :unit '((|m| 3)))
     (qtest (qpow #q(-2 +/- 0.1 m) #q(-3)) :value -1/8 :unit '((|m| -3)))
     (condition= (qpow #q(2 m) #q(3 +/- 0.1)) operation-undefined-error)
+    ;; Potentially problematic
+    (qtest (qpow #q(1 m / cm) 2) :value 1 :unit '((|m| 2) (|cm| -2)))
 
     ;; Root, no units
     (qtest (qroot 27 3) :value 3 :error 0 :unit nil)
@@ -213,6 +215,8 @@
     (condition= (qexpt #q(27 m) #q(1/3 +/- 0.01)) invalid-unit-operation-error)
     (condition= (qexpt #q(-27) #q(1/3 +/- 0.01)) error-propagation-error)
     (qtest (qexpt #q(27 +/- 0.2) #q(1/3 +/- 0.01)) :value 3 :unit ())
+    ;; This was previously calculated wrongly
+    (qtest (qexpt (q/ #q(1 m) #q(1 mm)) 1d0) :value 1000d0)
 
     ;; Logarithm qln
     (qtest (qln 2) :value (log 2) :error 0 :unit ())
