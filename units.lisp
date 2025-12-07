@@ -33,13 +33,9 @@
 ;; Unit expansion ------------------------------------------------------------------
 
 (defun collect-factors (f &rest expanded-unit-factors)
-  ;; Each of the expanded-unit-factors is a list (conv () () ())
-  (destructuring-bind (conv units)
-      (loop for factor in expanded-unit-factors
-         collect (first factor) into conv-factors
-         append (rest factor) into unit-factors
-         finally (return (list conv-factors unit-factors)))
-    `(,(apply #'* f conv) ,@units)))
+  "Multiplies conversion factors and collects unit factors"
+  (loop for uf in expanded-unit-factors do (setf f (* f (first uf))))
+  (cons f (loop for uf in expanded-unit-factors append (rest uf))))
 
 (defun reduce-unit (unit)
   "Reduces the powers of duplicate unit factors in a given unit, e.g. km^2 / km -> km, but m / km -> m / km. No unit lookup is made."
